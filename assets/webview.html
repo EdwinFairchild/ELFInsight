@@ -14,11 +14,12 @@
         <table id="symbolsTable" class="table mt-4">
             <thead>
                 <tr>
-                    <th>Address</th>
-                    <th>Size</th>
-                    <th>Type</th>
-                    <th>Name</th>
+                    <th id="nameHeader" style="cursor: pointer;">Name &#x21C5;</th>
                     <th>Section</th>
+                    <th id="sizeHeader" style="cursor: pointer;">Size (Bytes) &#x21C5;</th>
+                    <th>Type</th>
+                    <th>Address</th>
+                    <th>File Location</th>
                 </tr>
             </thead>
             <tbody>
@@ -28,30 +29,86 @@
     <script>
         (function() {
             const vscode = acquireVsCodeApi();
+            let symbolsData = [];
+            let sizeSortOrder = 1; // 1 for ascending, -1 for descending
+            let nameSortOrder = 1; // 1 for ascending, -1 for descending
 
             document.getElementById('loadSymbolsButton').addEventListener('click', () => {
                 vscode.postMessage({ command: 'loadSymbols' });
             });
 
+            document.getElementById('sizeHeader').addEventListener('click', () => {
+                // Sort symbols data by size
+                symbolsData.sort((a, b) => {
+                    const sizeA = parseInt(a.size);
+                    const sizeB = parseInt(b.size);
+                    return sizeSortOrder * (sizeA - sizeB);
+                });
+                sizeSortOrder *= -1; // Toggle sorting order
+                updateTable(); // Refresh the table after sorting
+            });
+
+            document.getElementById('nameHeader').addEventListener('click', () => {
+                // Sort symbols data by name
+                symbolsData.sort((a, b) => {
+                    const nameA = a.name.toLowerCase();
+                    const nameB = b.name.toLowerCase();
+                    if (nameA < nameB) return nameSortOrder * -1;
+                    if (nameA > nameB) return nameSortOrder * 1;
+                    return 0;
+                });
+                nameSortOrder *= -1; // Toggle sorting order
+                updateTable(); // Refresh the table after sorting
+            });
+
             window.addEventListener('message', event => {
                 const message = event.data;
                 if (message.command === 'displaySymbols') {
-                    const symbolsTableBody = document.querySelector('#symbolsTable tbody');
-                    symbolsTableBody.innerHTML = ''; // Clear previous rows if any
-
-                    message.symbols.forEach(symbol => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${symbol.address}</td>
-                            <td>${symbol.size}</td>
-                            <td>${symbol.type}</td>
-                            <td>${symbol.name}</td>
-                            <td>${symbol.section}</td>
-                        `;
-                        symbolsTableBody.appendChild(row);
-                    });
+                    symbolsData = message.symbols;
+                    updateTable();
                 }
             });
+
+            function updateTable() {
+                const symbolsTableBody = document.querySelector('#symbolsTable tbody');
+                symbolsTableBody.innerHTML = ''; // Clear previous rows
+
+                symbolsData.forEach(symbol => {
+                    const row = document.createElement('tr');
+
+                    // Determine the badge class for the section type
+                    let badgeClass = '';
+                    switch (symbol.section) {
+                        case '.text':
+                            badgeClass = 'bg-info';
+                            break;
+                        case '.bss':
+                            badgeClass = 'bg-success';
+                            break;
+                        case '.data':
+                            badgeClass = 'bg-secondary';
+                            break;
+                        case '.rodata':
+                            badgeClass = 'bg-danger';
+                            break;
+                        case '.bss (weak)':
+                            badgeClass = 'bg-warning';
+                            break;
+                        default:
+                            badgeClass = 'bg-dark';
+                    }
+
+                    row.innerHTML = `
+                    <td>${symbol.name}</td>
+                    <td><span class="badge ${badgeClass}">${symbol.section}</span></td>
+                    <td>${symbol.size}</td>
+                    <td>${symbol.type}</td>
+                        <td>${symbol.address}</td>
+                        <td>${symbol.fileLocation}</td>
+                    `;
+                    symbolsTableBody.appendChild(row);
+                });
+            }
         }());
     </script>
 </body>

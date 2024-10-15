@@ -113,12 +113,45 @@ function parseElfSymbols(output: string) {
     const symbols = lines.map(line => {
         const parts = line.trim().split(/\s+/);
         if (parts.length >= 4) {
+            // Assuming parts[1] is the size in hexadecimal and needs to be converted to decimal (bytes)
+            const sizeInBytes = parseInt(parts[1], 16); // Convert hex size to decimal
+
+            // Extract the section information from the "Type" field
+            const typeCode = parts[2];
+            let section = 'Unknown';
+            
+            // Map the type code to actual section names
+            switch (typeCode) {
+                case 'T':
+                case 't':
+                    section = '.text';
+                    break;
+                case 'B':
+                case 'b':
+                    section = '.bss';
+                    break;
+                case 'D':
+                case 'd':
+                    section = '.data';
+                    break;
+                case 'R':
+                case 'r':
+                    section = '.rodata';
+                    break;
+                case 'W':
+                    section = '.bss (weak)';
+                    break;
+                default:
+                    section = 'Unknown';
+            }
+
             return {
                 address: parts[0],
-                size: parts[1],
-                type: parts[2],
+                size: sizeInBytes.toString(), // Display size in bytes
+                type: typeCode,
                 name: parts[3],
-                section: parts.length > 4 ? parts[4] : ''
+                fileLocation: parts.length > 4 ? parts[4] : 'N/A', // Original file location information
+                section: section // Section (.bss, .data, .text, etc.)
             };
         }
         return null;
