@@ -11,6 +11,10 @@
   ],
   "activationEvents": [],
   "main": "./out/extension.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EdwinFairchild/ELFInsight"
+  },
   "contributes": {
     "commands": [
       {
@@ -20,26 +24,27 @@
       {
         "command": "elfinsight.showWebview",
         "title": "Show ELFInsight Webview"
-    }
+      }
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src",
+    "vscode:prepublish": "npm run esbuild",         
+    "compile": "node esbuild.config.js",             
+    "esbuild": "node esbuild.config.js",            
+    "watch": "tsc -watch -p ./",                    
+    "pretest": "npm run esbuild && npm run lint",   
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.94.0",
     "@types/mocha": "^10.0.8",
     "@types/node": "20.x",
+    "@types/vscode": "^1.94.0",
     "@typescript-eslint/eslint-plugin": "^8.7.0",
     "@typescript-eslint/parser": "^8.7.0",
-    "eslint": "^9.11.1",
-    "typescript": "^5.6.2",
     "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1"
+    "@vscode/test-electron": "^2.4.1",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.11.1",
+    "typescript": "^5.6.2"
   }
 }

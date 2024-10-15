@@ -1,6 +1,7 @@
 # elfinsight README
 
-This is the README for your extension "elfinsight". After writing up a brief description, we recommend including the following sections.
+# ELFInsight Extension
+ELFInsight is a VS Code extension for viewing ELF symbols.
 
 ## Features
 
