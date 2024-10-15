@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource:; script-src 'unsafe-inline' {{cspSource}}; style-src vscode-resource: 'unsafe-inline' {{cspSource}};">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}};">
     <title>ELFInsight Webview</title>
     <link rel="stylesheet" href="{{bootstrapUri}}">
 </head>
@@ -11,7 +11,7 @@
     <div class="container">
         <h1 class="mt-5">Hello from ELFInsight Webview!</h1>
         <button id="loadSymbolsButton" class="btn btn-primary mt-3">Load Symbols</button>
-        <table id="symbolsTable" class="table mt-4">
+        <table class="table mt-4">
             <thead>
                 <tr>
                     <th>Address</th>
@@ -21,7 +21,8 @@
                     <th>Section</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="symbolsTable">
+                <!-- Symbol rows will be added here dynamically -->
             </tbody>
         </table>
     </div>
@@ -30,15 +31,16 @@
             const vscode = acquireVsCodeApi();
 
             document.getElementById('loadSymbolsButton').addEventListener('click', () => {
+                console.log('Load Symbols button clicked');
                 vscode.postMessage({ command: 'loadSymbols' });
             });
 
             window.addEventListener('message', event => {
                 const message = event.data;
+                console.log('Received message from extension:', message);
                 if (message.command === 'displaySymbols') {
-                    const symbolsTableBody = document.querySelector('#symbolsTable tbody');
-                    symbolsTableBody.innerHTML = ''; // Clear previous rows if any
-
+                    const symbolsTable = document.getElementById('symbolsTable');
+                    symbolsTable.innerHTML = '';
                     message.symbols.forEach(symbol => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
@@ -48,7 +50,7 @@
                             <td>${symbol.name}</td>
                             <td>${symbol.section}</td>
                         `;
-                        symbolsTableBody.appendChild(row);
+                        symbolsTable.appendChild(row);
                     });
                 }
             });
