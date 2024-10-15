@@ -16,7 +16,11 @@
       {
         "command": "elfinsight.helloWorld",
         "title": "Hello World"
-      }
+      },
+      {
+        "command": "elfinsight.showWebview",
+        "title": "Show ELFInsight Webview"
+    }
     ]
   },
   "scripts": {
