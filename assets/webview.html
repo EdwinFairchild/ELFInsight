@@ -6,50 +6,141 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource:; script-src 'unsafe-inline' {{cspSource}}; style-src vscode-resource: 'unsafe-inline' {{cspSource}};">
     <title>ELFInsight Webview</title>
     <link rel="stylesheet" href="{{bootstrapUri}}">
+    <script src="{{chartJsUri}}"></script>
+    <style>
+        /* Increase size of the left column (table) and add scrolling */
+        .scrollable-table {
+            max-height: 500px;
+            max-width: 75%; /* Make the left column wider */
+            overflow-y: auto;
+            overflow-x: auto; /* Horizontal scrolling */
+        }
+
+        /* Center align all table texts */
+        #symbolsTable td, #symbolsTable th {
+            text-align: center; /* Center align text */
+        }
+
+        /* Limit the row height to a single line and truncate long text with ellipsis */
+        #symbolsTable td, #symbolsTable th {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-height: 1.5em; /* Limit row height */
+        }
+
+        /* Adjust the table layout for better responsiveness */
+        #symbolsTable {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+         /* Set specific column widths */
+        #symbolsTable th:nth-child(1), /* Name column */
+        #symbolsTable td:nth-child(1) { /* Ensure both header and cells are affected */
+            width: 150px; /* Width for Name column */
+        }
+
+        #symbolsTable th:nth-child(2), /* Section column */
+        #symbolsTable td:nth-child(2) {
+            width: 100px; /* Width for Section column */
+        }
+
+        #symbolsTable th:nth-child(3), /* Size column */
+        #symbolsTable td:nth-child(3) {
+            width: 150px; /* Width for Size column */
+        }
+
+        #symbolsTable th:nth-child(4), /* Address column (was nth-child(5) previously) */
+        #symbolsTable td:nth-child(4) {
+            width: 150px; /* Width for Address column */
+        }
+
+        #symbolsTable th:nth-child(5), /* File Location column (was nth-child(6) previously) */
+        #symbolsTable td:nth-child(5) {
+            width: 200px; /* Width for File Location column */
+        }
+
+        /* Reduce the size of the right column (for the pie chart) */
+        .col-md-4 {
+            padding: 15px;
+            max-width: 25%; /* Make the right column smaller */
+        }
+
+        /* Limit the size of the pie chart */
+        #memoryPieChart {
+            width: 300px !important; /* Fixed size for the canvas */
+            height: 300px !important;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="mt-5">Hello from ELFInsight Webview!</h1>
-        <button id="loadSymbolsButton" class="btn btn-primary mt-3">Load Symbols</button>
-        <table id="symbolsTable" class="table mt-4">
-            <thead>
-                <tr>
-                    <th id="nameHeader" style="cursor: pointer;">Name &#x21C5;</th>
-                    <th>Section</th>
-                    <th id="sizeHeader" style="cursor: pointer;">Size (Bytes) &#x21C5;</th>
-                    <th>Type</th>
-                    <th>Address</th>
-                    <th>File Location</th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+    <div class="container-fluid">
+        <!-- First Row: Intro Text and Button -->
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mt-5">Hello from ELFInsight Webview!</h1>
+                <button id="loadSymbolsButton" class="btn btn-primary mt-3">Load Symbols</button>
+            </div>
+        </div>
+
+        <!-- Second Row: Two Columns (Table and Chart) -->
+        <div class="row mt-4">
+            <!-- Left Column: Scrollable Symbol Table -->
+            <div class="col-md-8 scrollable-table">
+                <table id="symbolsTable" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th id="nameHeader" style="cursor: pointer;">Name &#x21C5;</th>
+                            <th>Section</th>
+                            <th id="sizeHeader" style="cursor: pointer;">Size &#x21C5;</th>
+                            <th>Address</th>
+                            <th>File Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Right Column: Pie Chart and Future Content -->
+            <div class="col-md-4">
+                <!-- Pie Chart Section inside a square container -->
+                <div class="mb-4">
+                    <canvas id="memoryPieChart"></canvas>
+                </div>
+
+                <!-- Future Section Below the Pie Chart -->
+                <div>
+                    <h4>Future Content Here</h4>
+                    <p>This section can be used for additional charts, text, or any other content in the future.</p>
+                </div>
+            </div>
+        </div>
     </div>
+
     <script>
         (function() {
             const vscode = acquireVsCodeApi();
             let symbolsData = [];
-            let sizeSortOrder = 1; // 1 for ascending, -1 for descending
-            let nameSortOrder = 1; // 1 for ascending, -1 for descending
+            let sizeSortOrder = 1;
+            let nameSortOrder = 1;
 
             document.getElementById('loadSymbolsButton').addEventListener('click', () => {
                 vscode.postMessage({ command: 'loadSymbols' });
             });
 
             document.getElementById('sizeHeader').addEventListener('click', () => {
-                // Sort symbols data by size
                 symbolsData.sort((a, b) => {
                     const sizeA = parseInt(a.size);
                     const sizeB = parseInt(b.size);
                     return sizeSortOrder * (sizeA - sizeB);
                 });
-                sizeSortOrder *= -1; // Toggle sorting order
-                updateTable(); // Refresh the table after sorting
+                sizeSortOrder *= -1;
+                updateTable();
             });
 
             document.getElementById('nameHeader').addEventListener('click', () => {
-                // Sort symbols data by name
                 symbolsData.sort((a, b) => {
                     const nameA = a.name.toLowerCase();
                     const nameB = b.name.toLowerCase();
@@ -57,8 +148,8 @@
                     if (nameA > nameB) return nameSortOrder * 1;
                     return 0;
                 });
-                nameSortOrder *= -1; // Toggle sorting order
-                updateTable(); // Refresh the table after sorting
+                nameSortOrder *= -1;
+                updateTable();
             });
 
             window.addEventListener('message', event => {
@@ -66,17 +157,16 @@
                 if (message.command === 'displaySymbols') {
                     symbolsData = message.symbols;
                     updateTable();
+                    updatePieChart(message.sectionSizes);
                 }
             });
 
             function updateTable() {
                 const symbolsTableBody = document.querySelector('#symbolsTable tbody');
-                symbolsTableBody.innerHTML = ''; // Clear previous rows
+                symbolsTableBody.innerHTML = ''; 
 
                 symbolsData.forEach(symbol => {
                     const row = document.createElement('tr');
-
-                    // Determine the badge class for the section type
                     let badgeClass = '';
                     switch (symbol.section) {
                         case '.text':
@@ -92,7 +182,7 @@
                             badgeClass = 'bg-danger';
                             break;
                         case '.bss (weak)':
-                            badgeClass = 'bg-warning';
+                            badgeClass = 'bg-primary';
                             break;
                         default:
                             badgeClass = 'bg-dark';
@@ -102,11 +192,45 @@
                     <td>${symbol.name}</td>
                     <td><span class="badge ${badgeClass}">${symbol.section}</span></td>
                     <td>${symbol.size}</td>
-                    <td>${symbol.type}</td>
-                        <td>${symbol.address}</td>
-                        <td>${symbol.fileLocation}</td>
+                    <td>${symbol.address}</td>
+                    <td>${symbol.fileLocation}</td>
                     `;
                     symbolsTableBody.appendChild(row);
+                });
+            }
+
+            function updatePieChart(sectionSizes) {
+                const ctx = document.getElementById('memoryPieChart').getContext('2d');
+                
+                if (!sectionSizes || !ctx) {
+                    console.error('No data provided for the pie chart or canvas context is missing');
+                    return;
+                }
+
+                const chartData = {
+                    labels: ['.text', '.bss', '.data', '.rodata'],
+                    datasets: [{
+                        label: 'Memory Usage',
+                        data: [
+                            sectionSizes.text || 0,
+                            sectionSizes.bss || 0,
+                            sectionSizes.data || 0,
+                            sectionSizes.rodata || 0
+                        ],
+                        backgroundColor: ['#36a2eb', '#4caf50', '#ffcd56', '#ff6384']
+                    }]
+                };
+
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: chartData,
+                    options: {
+                        maintainAspectRatio: true,
+                        responsive: true,
+                        legend: {
+                            position: 'top',
+                        },
+                    }
                 });
             }
         }());

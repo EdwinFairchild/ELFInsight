@@ -20,7 +20,7 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.ViewColumn.One,
             {
                 enableScripts: true,
-                localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'assets')]
+                localResourceRoots: [vscode.Uri.joinPath(context.extensionUri,	 'assets')]
             }
         );
 
@@ -53,9 +53,11 @@ function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri): s
     let htmlContent = fs.readFileSync(htmlPath.fsPath, 'utf8');
 
     const bootstrapUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'assets', 'bootstrap.min.css'));
+	const chartJsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'assets', 'chart.min.js'));
 
     // Replace placeholders in the HTML content
     htmlContent = htmlContent.replace('{{bootstrapUri}}', bootstrapUri.toString());
+	htmlContent = htmlContent.replace('{{chartJsUri}}', chartJsUri.toString());  // Add this line
     htmlContent = htmlContent.replace('{{cspSource}}', webview.cspSource);
 
     return htmlContent;
@@ -81,6 +83,7 @@ function showOpenFileDialog(panel: vscode.WebviewPanel) {
 }
 
 // Function to load symbols from the selected ELF file
+// Function to load symbols from the selected ELF file
 function loadElfSymbols(elfFilePath: string, panel: vscode.WebviewPanel) {
     vscode.window.showInformationMessage(`Loading symbols from ELF file: ${elfFilePath}`);
     const nmCommand = os.platform() === 'win32' ? 'arm-none-eabi-nm.exe' : 'arm-none-eabi-nm';
@@ -99,8 +102,7 @@ function loadElfSymbols(elfFilePath: string, panel: vscode.WebviewPanel) {
     process.on('close', (code: number) => {
         if (code === 0) {
             vscode.window.showInformationMessage(`nm process completed successfully`);
-            const symbols = parseElfSymbols(output);
-            panel.webview.postMessage({ command: 'displaySymbols', symbols });
+            const symbols = parseElfSymbols(output, panel);  // Pass panel here
         } else {
             vscode.window.showErrorMessage(`nm process exited with code ${code}`);
         }
@@ -108,54 +110,75 @@ function loadElfSymbols(elfFilePath: string, panel: vscode.WebviewPanel) {
 }
 
 // Function to parse symbols from the nm output
-function parseElfSymbols(output: string) {
+function parseElfSymbols(output: string, panel: vscode.WebviewPanel) {
     const lines = output.split('\n');
+    const sectionSizes = {
+        text: 0,
+        bss: 0,
+        bssWeak: 0,  // New .bss (weak) section
+        data: 0,
+        rodata: 0,
+    };
+
     const symbols = lines.map(line => {
         const parts = line.trim().split(/\s+/);
         if (parts.length >= 4) {
-            // Assuming parts[1] is the size in hexadecimal and needs to be converted to decimal (bytes)
             const sizeInBytes = parseInt(parts[1], 16); // Convert hex size to decimal
-
-            // Extract the section information from the "Type" field
             const typeCode = parts[2];
             let section = 'Unknown';
             
-            // Map the type code to actual section names
+            // Determine the section based on the type code
             switch (typeCode) {
                 case 'T':
                 case 't':
                     section = '.text';
+                    sectionSizes.text += sizeInBytes;
                     break;
                 case 'B':
                 case 'b':
                     section = '.bss';
+                    sectionSizes.bss += sizeInBytes;
+                    break;
+                case 'W':  // Weak symbols, typically for .bss (weak)
+                    section = '.bss (weak)';
+                    sectionSizes.bssWeak += sizeInBytes;  // Track size for .bss (weak)
                     break;
                 case 'D':
                 case 'd':
                     section = '.data';
+                    sectionSizes.data += sizeInBytes;
                     break;
                 case 'R':
                 case 'r':
                     section = '.rodata';
-                    break;
-                case 'W':
-                    section = '.bss (weak)';
+                    sectionSizes.rodata += sizeInBytes;
                     break;
                 default:
                     section = 'Unknown';
             }
 
+            // Return the symbol information excluding the 'type' field
             return {
-                address: parts[0],
-                size: sizeInBytes.toString(), // Display size in bytes
-                type: typeCode,
-                name: parts[3],
-                fileLocation: parts.length > 4 ? parts[4] : 'N/A', // Original file location information
-                section: section // Section (.bss, .data, .text, etc.)
+                // Prepend '0x' to the address
+                address: `0x${parts[0]}`,
+                
+                // Append '(bytes)' to the size value
+                size: `${sizeInBytes} (bytes)`,
+
+                name: parts[3],  // Keep the name
+                fileLocation: parts.length > 4 ? parts[4] : 'N/A',  // File location, if available
+                section: section  // Keep the section determined by the type
             };
         }
         return null;
     }).filter(symbol => symbol !== null);
+
+    // Post message to webview with symbols and section sizes
+    panel.webview.postMessage({
+        command: 'displaySymbols',
+        symbols,
+        sectionSizes
+    });
 
     return symbols;
 }
