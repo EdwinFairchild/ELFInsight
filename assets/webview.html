@@ -17,6 +17,13 @@
     <script src="{{chartJsUri}}"></script>
     <script src="{{bootstrapJsUri}}"></script>
     <style>
+
+  .tab {
+    width: 500px; /* You can set the default width here */
+    padding: 10px;
+    border: 1px solid #ccc;
+  }
+
         /* Increase size of the left column (table) and add scrolling */
         .scrollable-table {
             max-height: 500px;
@@ -152,7 +159,6 @@
         <!-------------------------------------------- First Row: Intro Text and Button --------------------------->
         <div class="row">
             <div class="col-12">
-                <h1 class="mt-5">ELFInsight!</h1>
                 <button id="loadSymbolsButton" class="btn btn-outline-primary mt-3">Load ELF</button>
             </div>
         </div>
