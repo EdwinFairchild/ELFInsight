@@ -100,8 +100,8 @@
         }
     
         /* Memory list adjustments */
-        .memory-list {
-            max-width: 350px;
+        .memory-list, .list-group{
+           
             width: 100%;
         }
     
@@ -139,55 +139,46 @@
             <!-- First Row: Bar Chart and Memory Section Info -->
             <div class="row mt-4 d-flex align-items-stretch">
                 <!-- Left Column: Bar Chart -->
-                <div class="col-md-6 bar-column d-flex">
+                <div class="col-md-7 bar-column d-flex">
                     <div class="chart-border flex-fill">
                         <canvas id="memoryBarChart"></canvas>
                     </div>
                 </div>
 
                 <!-- Right Column: Memory Section Info -->
-                <div class="col-md-6 d-flex">
+                <div class="col-md-5 d-flex">
                     <div class="divider flex-fill d-flex flex-column justify-content-center">
 
-                        <div class="memory-list">
+                        <div class="memory-list w-100">
                             <h3>Memory Sections:</h3>
-                            <ul class="list-group mb-3">
+                            <ul class="list-group w-100 mb-3">
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     Text (Flash)
-                                    <span class="badge bg-info rounded-pill"><span id="textSectionSize">0</span>
-                                        bytes</span>
+                                    <span class="badge bg-info rounded-pill"><span id="textSectionSize">0</span> bytes</span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     BSS (RAM)
-                                    <span class="badge bg-success rounded-pill"><span id="bssSectionSize">0</span>
-                                        bytes</span>
+                                    <span class="badge bg-success rounded-pill"><span id="bssSectionSize">0</span> bytes</span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     Data (Flash & RAM)
-                                    <span class="badge bg-secondary rounded-pill"><span id="dataSectionSize">0</span>
-                                        bytes</span>
+                                    <span class="badge bg-secondary rounded-pill"><span id="dataSectionSize">0</span> bytes</span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     RO Data (Flash)
-                                    <span class="badge bg-danger rounded-pill"><span id="rodataSectionSize">0</span>
-                                        bytes</span>
+                                    <span class="badge bg-danger rounded-pill"><span id="rodataSectionSize">0</span> bytes</span>
                                 </li>
                             </ul>
-                            <p>
-                            <p> </p>
-                            </p>
-
+                        
                             <h3>Total Memory Usage:</h3>
-                            <ul class="list-group">
+                            <ul class="list-group w-100">
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     Static RAM usage (boot-time)
-                                    <span class="badge bg-dark rounded-pill"><span id="totalRamUsed">0</span>
-                                        bytes</span>
+                                    <span class="badge bg-dark rounded-pill"><span id="totalRamUsed">0</span> bytes</span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     Flash usage
-                                    <span class="badge bg-dark rounded-pill"><span id="totalFlashUsed">0</span>
-                                        bytes</span>
+                                    <span class="badge bg-dark rounded-pill"><span id="totalFlashUsed">0</span> bytes</span>
                                 </li>
                             </ul>
                         </div>
@@ -199,7 +190,7 @@
             <!-- Second Row: Symbol Table -->
             <div class="row mt-4">
                 <!-- Left Column (Table) -->
-                <div class="col-md-6">
+                <div class="col-md-12">
                     <div class="search-section mt-3">
                         <h4>Search Symbols</h4>
                         <div class="input-group mb-3">
