@@ -92,7 +92,7 @@ function parseElfSymbols(output: string, panel: vscode.WebviewPanel) {
                     sectionSizes.rodata += sizeInBytes;
                     break;
                 default:
-                    section = 'Unknown';
+                    section = 'Unknown ';
             }
 
             // Return the symbol information excluding the 'type' field

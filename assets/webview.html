@@ -14,114 +14,116 @@
         .scrollable-table {
             max-height: 500px;
             max-width: 100%;
-            /* Make the left column wider */
             overflow-y: auto;
             overflow-x: auto;
-            /* Horizontal scrolling */
         }
-
+    
         /* Center align all table texts */
         #symbolsTable td,
         #symbolsTable th {
             text-align: center;
-            /* Center align text */
-        }
-
-        /* Limit the row height to a single line and truncate long text with ellipsis */
-        #symbolsTable td,
-        #symbolsTable th {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             max-height: 1.5em;
-            /* Limit row height */
         }
-
+    
         /* Adjust the table layout for better responsiveness */
         #symbolsTable {
             table-layout: fixed;
             width: 100%;
         }
-
+    
         /* Set specific column widths */
         #symbolsTable th:nth-child(1),
-        /* Name column */
         #symbolsTable td:nth-child(1) {
-            /* Ensure both header and cells are affected */
             width: 120px;
-            /* Width for Name column */
         }
-
+    
         #symbolsTable th:nth-child(2),
-        /* Section column */
         #symbolsTable td:nth-child(2) {
             width: 75px;
-            /* Width for Section column */
         }
-
+    
         #symbolsTable th:nth-child(3),
-        /* Size column */
         #symbolsTable td:nth-child(3) {
             width: 75px;
-            /* Width for Size column */
         }
-
+    
         #symbolsTable th:nth-child(4),
-        /* Address column (was nth-child(5) previously) */
         #symbolsTable td:nth-child(4) {
             width: 75px;
-            /* Width for Address column */
         }
-
-        /* #symbolsTable th:nth-child(5),
-        /* File Location column (was nth-child(6) previously) */
-        /* #symbolsTable td:nth-child(5) {
-            width: 500px;
-            /* Width for File Location column */
-
+    
         /* Reduce the size of the right column (for the bar chart) */
         .col-md-4 {
             padding: 15px;
             max-width: 25%;
-            /* Make the right column smaller */
         }
-
+    
         /* Limit the size of the pie chart */
-        #memoryPieChart {
-            width: 300px !important;
-            /* Fixed size for the canvas */
-            height: 300px !important;
-        }
-    </style>
-</head>
-
-<body>
-    <style>
-        /* Ensure the table scrolls when content overflows */
-        .scrollable-table {
-            max-height: 500px;
-            overflow-y: auto;
-            overflow-x: auto;
-        }
-
-        /* Center the pie chart inside the right column */
-        .right-column {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            /* Center the content horizontally */
-        }
-
-        /* Adjust the pie chart size and ensure it stays centered */
         #memoryPieChart {
             max-width: 300px;
             max-height: 300px;
             width: 100%;
-            /* Ensure it takes the available width */
             height: auto;
         }
+    
+        /* Center the pie chart inside the right column */
+        .right-column,
+        .pie-column {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+    
+        /* Bar chart styling */
+        .chart-border {
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+    
+        #memoryBarChart {
+            width: 100% !important;
+            height: 100% !important;
+            max-height: 350px;
+        }
+    
+        /* Right column content centered */
+        .divider {
+            height: 100%;
+        }
+    
+        /* Memory list adjustments */
+        .memory-list {
+            max-width: 350px;
+            width: 100%;
+        }
+    
+        /* Highlighted text styling */
+        mark {
+            background-color: #ffeb3b;
+            color: black;
+            padding: 0;
+            border-radius: 2px;
+        }
+    
+        /* Ensure the container takes up the full width and no padding */
+        .container-fluid {
+            padding-left: 0;
+            padding-right: 0;
+        }
     </style>
+    
+</head>
 
+<body>
+ 
     <div class="container-fluid">
         <!-------------------------------------------- First Row: Intro Text and Button --------------------------->
         <div class="row">
@@ -131,114 +133,7 @@
             </div>
         </div>
         <!-------------------------------------------- Table stuff --------------------------->
-        <style>
-            .container-fluid {
-                padding-left: 0;
-                padding-right: 0;
-            }
-
-            /* Center the pie chart inside the column */
-            .pie-column {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            }
-
-            /* Adjust the pie chart size and ensure it stays centered */
-            #memoryPieChart {
-                max-width: 300px;
-                max-height: 300px;
-                width: 100%;
-                /* Ensure it takes the available width */
-                height: auto;
-            }
-
-            /* Ensure the table scrolls when content overflows */
-            .scrollable-table {
-                max-height: 500px;
-                overflow-y: auto;
-                overflow-x: auto;
-            }
-        </style>
-        <style>
-            /* Ensure the container takes up the full width and no padding */
-            .container-fluid {
-                padding-left: 0;
-                padding-right: 0;
-            }
-
-            /* Center the pie chart inside the column */
-            .pie-column {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            }
-
-            /* Adjust the pie chart size and ensure it stays centered */
-            #memoryPieChart {
-                max-width: 250px;
-                /* Reduced size slightly to fit better */
-                max-height: 250px;
-                width: 100%;
-                /* Ensure it takes the available width */
-                height: auto;
-            }
-
-            /* Ensure the table scrolls when content overflows */
-            .scrollable-table {
-                max-height: 500px;
-                overflow-y: auto;
-                overflow-x: auto;
-                width: 100%;
-            }
-
-            #symbolsTable {
-                table-layout: fixed;
-                width: 100%;
-            }
-
-            /* Bar chart styling */
-            .chart-border {
-                border: 1px solid #ccc;
-                padding: 10px;
-                border-radius: 5px;
-                height: 100%;
-                display: flex;
-                align-items: center;
-            }
-
-            #memoryBarChart {
-                width: 100% !important;
-                height: 100% !important;
-                /* Optional max-height */
-                max-height: 350px;
-            }
-
-            /* Right column content centered */
-            .divider {
-                height: 100%;
-            }
-
-            /* Memory list adjustments */
-            .memory-list {
-                max-width: 350px;
-                width: 100%;
-            }
-            mark {
-            background-color: #ffeb3b; /* Your desired background color */
-            color: black;             /* Your desired text color */
-            padding: 0;
-            border-radius: 2px;
-        }
-
-            /* Add a vertical divider between the columns
-        .divider {
-            border-left: 1px solid #ddd;
-            height: 100%;
-            margin-left: 20px;
-            padding-left: 20px;
-        } */
-        </style>
+      
 
         <div class="container-fluid">
             <!-- First Row: Bar Chart and Memory Section Info -->
@@ -319,7 +214,8 @@
                             <thead>
                                 <tr>
                                     <th id="nameHeader" style="cursor: pointer;">Name &#x21C5;</th>
-                                    <th>Section</th>
+                                    <th id="sectionHeader" style="cursor: pointer;">Section &#x21C5;</th>
+
                                     <th id="sizeHeader" style="cursor: pointer;">Size &#x21C5;</th>
                                     <th>Address</th>
 
@@ -411,6 +307,20 @@
                         updateTable(symbolsData);
                         saveState();  // Save the updated state
                     });
+
+
+                    // Sort by section (badge text) NOT WORKING
+                    // document.getElementById('sectionHeader').addEventListener('click', () => {
+                    //     symbolsData.sort((a, b) => {
+                    //         const sectionA = getBadgeText(a.section);
+                    //         const sectionB = getBadgeText(b.section);
+                    //         if (sectionA < sectionB) return sectionSortOrder * -1;
+                    //         if (sectionA > sectionB) return sectionSortOrder * 1;
+                    //         return 0;
+                    //     });
+                    //     sectionSortOrder *= -1;
+                    //     updateTable(symbolsData);
+                    // });               
 
                     // Event listener to receive messages from the extension
                     window.addEventListener('message', event => {
