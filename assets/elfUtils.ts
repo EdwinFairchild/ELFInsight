@@ -13,7 +13,7 @@ export function showOpenFileDialog(panel: vscode.WebviewPanel) {
         }
     }).then(fileUri => {
         if (fileUri && fileUri[0]) {
-            vscode.window.showInformationMessage(`Selected ELF file: ${fileUri[0].fsPath}`);
+          //  vscode.window.showInformationMessage(`Selected ELF file: ${fileUri[0].fsPath}`);
             loadElfSymbols(fileUri[0].fsPath, panel);
         } else {
             vscode.window.showErrorMessage('No file selected');
@@ -23,7 +23,7 @@ export function showOpenFileDialog(panel: vscode.WebviewPanel) {
 
 // Function to load symbols from the selected ELF file
 export function loadElfSymbols(elfFilePath: string, panel: vscode.WebviewPanel) {
-    vscode.window.showInformationMessage(`Loading symbols from ELF file: ${elfFilePath}`);
+  //  vscode.window.showInformationMessage(`Loading symbols from ELF file: ${elfFilePath}`);
     const nmCommand = os.platform() === 'win32' ? 'arm-none-eabi-nm.exe' : 'arm-none-eabi-nm';
 
     const process = spawn(nmCommand, ['-S', '-l', elfFilePath]);
@@ -39,7 +39,7 @@ export function loadElfSymbols(elfFilePath: string, panel: vscode.WebviewPanel) 
 
     process.on('close', (code: number) => {
         if (code === 0) {
-            vscode.window.showInformationMessage(`nm process completed successfully`);
+       //     vscode.window.showInformationMessage(`nm process completed successfully`);
             const symbols = parseElfSymbols(output, panel);  // Pass panel here
         } else {
             vscode.window.showErrorMessage(`nm process exited with code ${code}`);
@@ -51,11 +51,11 @@ export function loadElfSymbols(elfFilePath: string, panel: vscode.WebviewPanel) 
 function parseElfSymbols(output: string, panel: vscode.WebviewPanel) {
     const lines = output.split('\n');
     const sectionSizes = {
-        text: 0,
-        bss: 0,
-        bssWeak: 0,  // New .bss (weak) section
-        data: 0,
-        rodata: 0,
+        text: 0,       // Flash (.text)
+        bss: 0,        // RAM (.bss)
+        bssWeak: 0,    // RAM (.bssWeak)
+        data: 0,       // Flash & RAM (.data)
+        rodata: 0      // Flash (.rodata)
     };
 
     const symbols = lines.map(line => {
@@ -64,7 +64,7 @@ function parseElfSymbols(output: string, panel: vscode.WebviewPanel) {
             const sizeInBytes = parseInt(parts[1], 16); // Convert hex size to decimal
             const typeCode = parts[2];
             let section = 'Unknown';
-            
+
             // Determine the section based on the type code
             switch (typeCode) {
                 case 'T':
@@ -107,12 +107,25 @@ function parseElfSymbols(output: string, panel: vscode.WebviewPanel) {
         return null;
     }).filter(symbol => symbol !== null);
 
+    // Calculate total flash usage (text + rodata + data)
+    const totalFlashUsed = sectionSizes.text + sectionSizes.rodata + sectionSizes.data;
+
+    // Calculate total RAM usage (bss + data + bssWeak)
+    const totalRamUsed = sectionSizes.bss + sectionSizes.data + sectionSizes.bssWeak;
+
+    // Show notifications to display the totals
+    vscode.window.showInformationMessage(`Total Flash used: ${totalFlashUsed} bytes`);
+    vscode.window.showInformationMessage(`Total RAM used: ${totalRamUsed} bytes`);
+
     // Post message to webview with symbols and section sizes
     panel.webview.postMessage({
         command: 'displaySymbols',
         symbols,
-        sectionSizes
+        sectionSizes,
+        flashUsed: totalFlashUsed,
+        ramUsed: totalRamUsed
     });
+    vscode.window.showInformationMessage(`Symbols length: ${symbols.length}`);
 
     return symbols;
 }

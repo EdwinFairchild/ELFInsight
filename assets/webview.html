@@ -113,6 +113,9 @@
                 <!-- Future Section Below the Pie Chart -->
                 <div>
                     <h4>Future Content Here</h4>
+                    <p>Total used flash: <span id="totalFlashUsed">0</span> bytes</p>
+                    <p>Total used RAM: <span id="totalRamUsed">0</span> bytes</p>
+
                     <p>This section can be used for additional charts, text, or any other content in the future.</p>
                 </div>
             </div>
@@ -120,120 +123,177 @@
     </div>
 
     <script>
-        (function() {
-            const vscode = acquireVsCodeApi();
-            let symbolsData = [];
-            let sizeSortOrder = 1;
-            let nameSortOrder = 1;
+  (function() {
+    const vscode = acquireVsCodeApi();
+    let symbolsData = [];
+    let sizeSortOrder = 1;
+    let nameSortOrder = 1;
+    let sectionSizes = {};
 
-            document.getElementById('loadSymbolsButton').addEventListener('click', () => {
-                vscode.postMessage({ command: 'loadSymbols' });
-            });
+    // Restore state if available
+    const previousState = vscode.getState();
+    if (previousState) {
+        symbolsData = previousState.symbolsData || [];
+        sizeSortOrder = previousState.sizeSortOrder || 1;
+        nameSortOrder = previousState.nameSortOrder || 1;
+        sectionSizes = previousState.sectionSizes || {};  // Restore full sectionSizes
+        updateTable(symbolsData);
+        updatePieChart(sectionSizes);  // Use the restored sectionSizes
+        document.getElementById('totalFlashUsed').textContent = previousState.flashUsed || 0;
+        document.getElementById('totalRamUsed').textContent = previousState.ramUsed || 0;
+    }
 
-            document.getElementById('sizeHeader').addEventListener('click', () => {
-                symbolsData.sort((a, b) => {
-                    const sizeA = parseInt(a.size);
-                    const sizeB = parseInt(b.size);
-                    return sizeSortOrder * (sizeA - sizeB);
-                });
-                sizeSortOrder *= -1;
-                updateTable();
-            });
+    // Load symbols when button is clicked
+    document.getElementById('loadSymbolsButton').addEventListener('click', () => {
+        vscode.postMessage({ command: 'loadSymbols' });
+    });
 
-            document.getElementById('nameHeader').addEventListener('click', () => {
-                symbolsData.sort((a, b) => {
-                    const nameA = a.name.toLowerCase();
-                    const nameB = b.name.toLowerCase();
-                    if (nameA < nameB) return nameSortOrder * -1;
-                    if (nameA > nameB) return nameSortOrder * 1;
-                    return 0;
-                });
-                nameSortOrder *= -1;
-                updateTable();
-            });
+    // Sort by size when size header is clicked
+    document.getElementById('sizeHeader').addEventListener('click', () => {
+        symbolsData.sort((a, b) => {
+            const sizeA = parseInt(a.size); // Parse size as integer
+            const sizeB = parseInt(b.size);
+            return sizeSortOrder * (sizeA - sizeB);  // Sort ascending or descending
+        });
+        sizeSortOrder *= -1;  // Reverse sort order for next click
+        updateTable(symbolsData);
+        saveState();  // Save the updated state
+    });
 
-            window.addEventListener('message', event => {
-                const message = event.data;
-                if (message.command === 'displaySymbols') {
-                    symbolsData = message.symbols;
-                    updateTable();
-                    updatePieChart(message.sectionSizes);
-                }
-            });
+    // Sort by name when name header is clicked
+    document.getElementById('nameHeader').addEventListener('click', () => {
+        symbolsData.sort((a, b) => {
+            const nameA = a.name.toLowerCase();
+            const nameB = b.name.toLowerCase();
+            if (nameA < nameB) return nameSortOrder * -1;
+            if (nameA > nameB) return nameSortOrder * 1;
+            return 0;
+        });
+        nameSortOrder *= -1;  // Reverse sort order for next click
+        updateTable(symbolsData);
+        saveState();  // Save the updated state
+    });
 
-            function updateTable() {
-                const symbolsTableBody = document.querySelector('#symbolsTable tbody');
-                symbolsTableBody.innerHTML = ''; 
+    // Receive message from extension and update table
+    window.addEventListener('message', event => {
+        const message = event.data;
 
-                symbolsData.forEach(symbol => {
-                    const row = document.createElement('tr');
-                    let badgeClass = '';
-                    switch (symbol.section) {
-                        case '.text':
-                            badgeClass = 'bg-info';
-                            break;
-                        case '.bss':
-                            badgeClass = 'bg-success';
-                            break;
-                        case '.data':
-                            badgeClass = 'bg-secondary';
-                            break;
-                        case '.rodata':
-                            badgeClass = 'bg-danger';
-                            break;
-                        case '.bss (weak)':
-                            badgeClass = 'bg-primary';
-                            break;
-                        default:
-                            badgeClass = 'bg-dark';
-                    }
+        if (message.command === 'displaySymbols') {
+            symbolsData = message.symbols || [];  // Update global symbolsData
+            sectionSizes = message.sectionSizes || {};  // Update global sectionSizes
+            updateTable(symbolsData);
+            updatePieChart(sectionSizes);
 
-                    row.innerHTML = `
-                    <td>${symbol.name}</td>
-                    <td><span class="badge ${badgeClass}">${symbol.section}</span></td>
-                    <td>${symbol.size}</td>
-                    <td>${symbol.address}</td>
-                    <td>${symbol.fileLocation}</td>
-                    `;
-                    symbolsTableBody.appendChild(row);
-                });
+            document.getElementById('totalFlashUsed').textContent = message.flashUsed || 0;
+            document.getElementById('totalRamUsed').textContent = message.ramUsed || 0;
+
+            saveState();  // Save the updated state
+        }
+    });
+
+    // Function to update the table
+    function updateTable(symbolsData = []) {
+        const symbolsTableBody = document.querySelector('#symbolsTable tbody');
+
+        if (!symbolsTableBody) {
+            console.error("Table body not found");
+            return;
+        }
+
+        // Clear existing rows
+        symbolsTableBody.innerHTML = '';
+
+        if (symbolsData.length === 0) {
+            console.error("No symbols data received.");
+            return;
+        }
+
+        symbolsData.forEach(symbol => {
+            const row = document.createElement('tr');
+            let badgeClass = '';
+
+            switch (symbol.section) {
+                case '.text':
+                    badgeClass = 'bg-info';
+                    break;
+                case '.bss':
+                    badgeClass = 'bg-success';
+                    break;
+                case '.data':
+                    badgeClass = 'bg-secondary';
+                    break;
+                case '.rodata':
+                    badgeClass = 'bg-danger';
+                    break;
+                case '.bss (weak)':
+                    badgeClass = 'bg-primary';
+                    break;
+                default:
+                    badgeClass = 'bg-dark';
             }
 
-            function updatePieChart(sectionSizes) {
-                const ctx = document.getElementById('memoryPieChart').getContext('2d');
-                
-                if (!sectionSizes || !ctx) {
-                    console.error('No data provided for the pie chart or canvas context is missing');
-                    return;
-                }
+            row.innerHTML = `
+                <td>${symbol.name}</td>
+                <td><span class="badge ${badgeClass}">${symbol.section}</span></td>
+                <td>${symbol.size}</td>
+                <td>${symbol.address}</td>
+                <td>${symbol.fileLocation}</td>
+            `;
 
-                const chartData = {
-                    labels: ['.text', '.bss', '.data', '.rodata'],
-                    datasets: [{
-                        label: 'Memory Usage',
-                        data: [
-                            sectionSizes.text || 0,
-                            sectionSizes.bss || 0,
-                            sectionSizes.data || 0,
-                            sectionSizes.rodata || 0
-                        ],
-                        backgroundColor: ['#36a2eb', '#4caf50', '#ffcd56', '#ff6384']
-                    }]
-                };
+            symbolsTableBody.appendChild(row);
+        });
+    }
 
-                new Chart(ctx, {
-                    type: 'pie',
-                    data: chartData,
-                    options: {
-                        maintainAspectRatio: true,
-                        responsive: true,
-                        legend: {
-                            position: 'top',
-                        },
-                    }
-                });
+    // Function to update the pie chart
+    function updatePieChart(sectionSizes) {
+        const ctx = document.getElementById('memoryPieChart').getContext('2d');
+
+        if (!sectionSizes || !ctx) {
+            console.error('No data provided for the pie chart or canvas context is missing');
+            return;
+        }
+
+        const chartData = {
+            labels: ['.text', '.bss', '.data', '.rodata'],
+            datasets: [{
+                label: 'Memory Usage',
+                data: [
+                    sectionSizes.text || 0,
+                    sectionSizes.bss || 0,
+                    sectionSizes.data || 0,
+                    sectionSizes.rodata || 0
+                ],
+                backgroundColor: ['#36a2eb', '#4caf50', '#ffcd56', '#ff6384']
+            }]
+        };
+
+        new Chart(ctx, {
+            type: 'pie',
+            data: chartData,
+            options: {
+                maintainAspectRatio: true,
+                responsive: true,
+                legend: {
+                    position: 'top',
+                },
             }
-        }());
+        });
+    }
+
+    // Function to save the current state of the webview
+    function saveState() {
+        vscode.setState({
+            symbolsData,
+            sizeSortOrder,
+            nameSortOrder,
+            sectionSizes,  // Save full sectionSizes object
+            flashUsed: document.getElementById('totalFlashUsed').textContent || 0,
+            ramUsed: document.getElementById('totalRamUsed').textContent || 0
+        });
+    }
+}());
+
+
     </script>
 </body>
 </html>
