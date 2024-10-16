@@ -6,9 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy"
         content="default-src 'none'; img-src vscode-resource:; script-src 'unsafe-inline' {{cspSource}}; style-src vscode-resource: 'unsafe-inline' {{cspSource}};">
+        
+        <!-- <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; img-src vscode-resource:; script-src 'unsafe-inline' {{cspSource}} vscode-resource:; style-src vscode-resource: 'unsafe-inline' {{cspSource}};">
+     -->
+   
     <title>ELFInsight Webview</title>
     <link rel="stylesheet" href="{{bootstrapUri}}">
+    <script src="{{popperJsUri}}"></script>
     <script src="{{chartJsUri}}"></script>
+    <script src="{{bootstrapJsUri}}"></script>
     <style>
         /* Increase size of the left column (table) and add scrolling */
         .scrollable-table {
@@ -124,105 +131,120 @@
 
 <body>
  
-    <div class="container-fluid">
+   <!-- Bootstrap Tabs Navigation -->
+<ul class="nav nav-tabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <a class="nav-link active" data-bs-toggle="tab" href="#overview" aria-selected="true" role="tab">Overview</a>
+  </li>
+  <li class="nav-item" role="presentation">
+    <a class="nav-link" data-bs-toggle="tab" href="#callGraphs" aria-selected="false" role="tab">Call Graphs</a>
+  </li>
+  <li class="nav-item" role="presentation">
+    <a class="nav-link" data-bs-toggle="tab" href="#detailedReports" aria-selected="false" role="tab">Detailed Reports</a>
+  </li>
+</ul>
+
+<!-- Bootstrap Tab Content -->
+<div id="myTabContent" class="tab-content">
+    <!-- Overview Tab -->
+    <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+      <div class="container-fluid">
         <!-------------------------------------------- First Row: Intro Text and Button --------------------------->
         <div class="row">
             <div class="col-12">
                 <h1 class="mt-5">ELFInsight!</h1>
-                <button id="loadSymbolsButton" class="btn btn-outline-primary mt-3">Load Symbols</button>
+                <button id="loadSymbolsButton" class="btn btn-outline-primary mt-3">Load ELF</button>
             </div>
         </div>
-        <!-------------------------------------------- Table stuff --------------------------->
-      
-
-        <div class="container-fluid">
-            <!-- First Row: Bar Chart and Memory Section Info -->
-            <div class="row mt-4 d-flex align-items-stretch">
-                <!-- Left Column: Bar Chart -->
-                <div class="col-md-7 bar-column d-flex">
-                    <div class="chart-border flex-fill">
-                        <canvas id="memoryBarChart"></canvas>
-                    </div>
+  
+        <!-- First Row: Bar Chart and Memory Section Info -->
+        <div class="row mt-4 d-flex align-items-stretch">
+            <div class="col-md-7 bar-column d-flex">
+                <div class="chart-border flex-fill">
+                    <canvas id="memoryBarChart"></canvas>
                 </div>
-
-                <!-- Right Column: Memory Section Info -->
-                <div class="col-md-5 d-flex">
-                    <div class="divider flex-fill d-flex flex-column justify-content-center">
-
-                        <div class="memory-list w-100">
-                            <h3>Memory Sections:</h3>
-                            <ul class="list-group w-100 mb-3">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    Text (Flash)
-                                    <span class="badge bg-info rounded-pill"><span id="textSectionSize">0</span> bytes</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    BSS (RAM)
-                                    <span class="badge bg-success rounded-pill"><span id="bssSectionSize">0</span> bytes</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    Data (Flash & RAM)
-                                    <span class="badge bg-secondary rounded-pill"><span id="dataSectionSize">0</span> bytes</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    RO Data (Flash)
-                                    <span class="badge bg-danger rounded-pill"><span id="rodataSectionSize">0</span> bytes</span>
-                                </li>
-                            </ul>
-                        
-                            <h3>Total Memory Usage:</h3>
-                            <ul class="list-group w-100">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    Static RAM usage (boot-time)
-                                    <span class="badge bg-dark rounded-pill"><span id="totalRamUsed">0</span> bytes</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    Flash usage
-                                    <span class="badge bg-dark rounded-pill"><span id="totalFlashUsed">0</span> bytes</span>
-                                </li>
-                            </ul>
-                        </div>
+            </div>
+  
+            <!-- Right Column: Memory Section Info -->
+            <div class="col-md-5 d-flex">
+                <div class="divider flex-fill d-flex flex-column justify-content-center">
+                    <div class="memory-list w-100">
+                        <h3>Memory Sections:</h3>
+                        <ul class="list-group w-100 mb-3">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Text (Flash)
+                                <span class="badge bg-info rounded-pill"><span id="textSectionSize">0</span> bytes</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                BSS (RAM)
+                                <span class="badge bg-success rounded-pill"><span id="bssSectionSize">0</span> bytes</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Data (Flash & RAM)
+                                <span class="badge bg-secondary rounded-pill"><span id="dataSectionSize">0</span> bytes</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                RO Data (Flash)
+                                <span class="badge bg-danger rounded-pill"><span id="rodataSectionSize">0</span> bytes</span>
+                            </li>
+                        </ul>
+  
+                        <h3>Total Memory Usage:</h3>
+                        <ul class="list-group w-100">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Static RAM usage (boot-time)
+                                <span class="badge bg-dark rounded-pill"><span id="totalRamUsed">0</span> bytes</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Flash usage
+                                <span class="badge bg-dark rounded-pill"><span id="totalFlashUsed">0</span> bytes</span>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
-
-
-            <!-- Second Row: Symbol Table -->
-            <div class="row mt-4">
-                <!-- Left Column (Table) -->
-                <div class="col-md-12">
-                    <div class="search-section mt-3">
-                        <h4>Search Symbols</h4>
-                        <div class="input-group mb-3">
-                            <input type="text" id="searchInput" class="form-control" placeholder="Enter symbol name">
-                            <button class="btn btn-outline-secondary" type="button" id="searchButton">Search</button>
-                            <!-- Uncomment below line if you add reset button -->
-                            <!-- <button class="btn btn-outline-secondary" type="button" id="resetButton">Reset</button> -->
-                        </div>
-                    </div>
-                    <div class="scrollable-table">
-                        <table id="symbolsTable" class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th id="nameHeader" style="cursor: pointer;">Name &#x21C5;</th>
-                                    <th id="sectionHeader" style="cursor: pointer;">Section &#x21C5;</th>
-
-                                    <th id="sizeHeader" style="cursor: pointer;">Size &#x21C5;</th>
-                                    <th>Address</th>
-
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Table data will be populated here -->
-                            </tbody>
-                        </table>
+        </div>
+  
+        <!-- Second Row: Symbol Table -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="search-section mt-3">
+                    <h4>Search Symbols</h4>
+                    <div class="input-group mb-3">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Enter symbol name">
+                        <button class="btn btn-outline-secondary" type="button" id="searchButton">Search</button>
                     </div>
                 </div>
-                <!-- Right Column (Empty) -->
-                <div class="col-md-6">
-                    <!-- Optional: Add content here or leave empty -->
+                <div class="scrollable-table">
+                    <table id="symbolsTable" class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th id="nameHeader" style="cursor: pointer;">Name &#x21C5;</th>
+                                <th id="sectionHeader" style="cursor: pointer;">Section &#x21C5;</th>
+                                <th id="sizeHeader" style="cursor: pointer;">Size &#x21C5;</th>
+                                <th>Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Table data will be populated here -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Call Graphs Tab (placeholder content) -->
+    <div class="tab-pane fade" id="callGraphs" role="tabpanel" aria-labelledby="callGraphs-tab">
+      <p>Call graph visualization and analysis will be added here.</p>
+    </div>
+  
+    <!-- Detailed Reports Tab (placeholder content) -->
+    <div class="tab-pane fade" id="detailedReports" role="tabpanel" aria-labelledby="detailedReports-tab">
+      <p>Detailed reports and insights will be added here.</p>
+    </div>
+  </div>
 
             <script>
                 (function () {
@@ -298,7 +320,19 @@
                         updateTable(symbolsData);
                         saveState();  // Save the updated state
                     });
-
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var tabs = document.querySelectorAll('.nav-link');
+                        tabs.forEach(function (tab) {
+                            tab.addEventListener('click', function (event) {
+                                event.preventDefault();
+                                var target = this.getAttribute('href');
+                                document.querySelectorAll('.tab-pane').forEach(function (pane) {
+                                    pane.classList.remove('active', 'show');
+                                });
+                                document.querySelector(target).classList.add('active', 'show');
+                            });
+                        });
+                    });
 
                     // Sort by section (badge text) NOT WORKING
                     // document.getElementById('sectionHeader').addEventListener('click', () => {
