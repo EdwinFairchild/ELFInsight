@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource:; script-src 'unsafe-inline' {{cspSource}}; style-src vscode-resource: 'unsafe-inline' {{cspSource}};">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; img-src vscode-resource:; script-src 'unsafe-inline' {{cspSource}}; style-src vscode-resource: 'unsafe-inline' {{cspSource}};">
     <title>ELFInsight Webview</title>
     <link rel="stylesheet" href="{{bootstrapUri}}">
     <script src="{{chartJsUri}}"></script>
@@ -11,22 +13,28 @@
         /* Increase size of the left column (table) and add scrolling */
         .scrollable-table {
             max-height: 500px;
-            max-width: 75%; /* Make the left column wider */
+            max-width: 75%;
+            /* Make the left column wider */
             overflow-y: auto;
-            overflow-x: auto; /* Horizontal scrolling */
+            overflow-x: auto;
+            /* Horizontal scrolling */
         }
 
         /* Center align all table texts */
-        #symbolsTable td, #symbolsTable th {
-            text-align: center; /* Center align text */
+        #symbolsTable td,
+        #symbolsTable th {
+            text-align: center;
+            /* Center align text */
         }
 
         /* Limit the row height to a single line and truncate long text with ellipsis */
-        #symbolsTable td, #symbolsTable th {
+        #symbolsTable td,
+        #symbolsTable th {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-height: 1.5em; /* Limit row height */
+            max-height: 1.5em;
+            /* Limit row height */
         }
 
         /* Adjust the table layout for better responsiveness */
@@ -35,59 +43,194 @@
             width: 100%;
         }
 
-         /* Set specific column widths */
-        #symbolsTable th:nth-child(1), /* Name column */
-        #symbolsTable td:nth-child(1) { /* Ensure both header and cells are affected */
-            width: 150px; /* Width for Name column */
+        /* Set specific column widths */
+        #symbolsTable th:nth-child(1),
+        /* Name column */
+        #symbolsTable td:nth-child(1) {
+            /* Ensure both header and cells are affected */
+            width: 150px;
+            /* Width for Name column */
         }
 
-        #symbolsTable th:nth-child(2), /* Section column */
+        #symbolsTable th:nth-child(2),
+        /* Section column */
         #symbolsTable td:nth-child(2) {
-            width: 100px; /* Width for Section column */
+            width: 100px;
+            /* Width for Section column */
         }
 
-        #symbolsTable th:nth-child(3), /* Size column */
+        #symbolsTable th:nth-child(3),
+        /* Size column */
         #symbolsTable td:nth-child(3) {
-            width: 150px; /* Width for Size column */
+            width: 150px;
+            /* Width for Size column */
         }
 
-        #symbolsTable th:nth-child(4), /* Address column (was nth-child(5) previously) */
+        #symbolsTable th:nth-child(4),
+        /* Address column (was nth-child(5) previously) */
         #symbolsTable td:nth-child(4) {
-            width: 150px; /* Width for Address column */
+            width: 150px;
+            /* Width for Address column */
         }
 
-        #symbolsTable th:nth-child(5), /* File Location column (was nth-child(6) previously) */
+        #symbolsTable th:nth-child(5),
+        /* File Location column (was nth-child(6) previously) */
         #symbolsTable td:nth-child(5) {
-            width: 200px; /* Width for File Location column */
+            width: 200px;
+            /* Width for File Location column */
         }
 
         /* Reduce the size of the right column (for the pie chart) */
         .col-md-4 {
             padding: 15px;
-            max-width: 25%; /* Make the right column smaller */
+            max-width: 25%;
+            /* Make the right column smaller */
         }
 
         /* Limit the size of the pie chart */
         #memoryPieChart {
-            width: 300px !important; /* Fixed size for the canvas */
+            width: 300px !important;
+            /* Fixed size for the canvas */
             height: 300px !important;
         }
     </style>
 </head>
+
 <body>
+    <style>
+        /* Ensure the table scrolls when content overflows */
+        .scrollable-table {
+            max-height: 500px;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+    
+        /* Center the pie chart inside the right column */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center the content horizontally */
+        }
+    
+        /* Adjust the pie chart size and ensure it stays centered */
+        #memoryPieChart {
+            max-width: 300px;
+            max-height: 300px;
+            width: 100%; /* Ensure it takes the available width */
+            height: auto;
+        }
+    </style>
+    
     <div class="container-fluid">
-        <!-- First Row: Intro Text and Button -->
+        <!-------------------------------------------- First Row: Intro Text and Button --------------------------->
         <div class="row">
             <div class="col-12">
-                <h1 class="mt-5">Hello from ELFInsight Webview!</h1>
-                <button id="loadSymbolsButton" class="btn btn-primary mt-3">Load Symbols</button>
+                <h1 class="mt-5">ELFInsight!</h1>
+                <button id="loadSymbolsButton" class="btn btn-outline-primary mt-3">Load Symbols</button>
             </div>
         </div>
-
-        <!-- Second Row: Two Columns (Table and Chart) -->
+        <!-------------------------------------------- Table stuff --------------------------->
+        <style>
+            .container-fluid {
+                padding-left: 0;
+                padding-right: 0;
+            }
+            /* Center the pie chart inside the column */
+            .pie-column {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+        
+            /* Adjust the pie chart size and ensure it stays centered */
+            #memoryPieChart {
+                max-width: 300px;
+                max-height: 300px;
+                width: 100%; /* Ensure it takes the available width */
+                height: auto;
+            }
+        
+            /* Ensure the table scrolls when content overflows */
+            .scrollable-table {
+                max-height: 500px;
+                overflow-y: auto;
+                overflow-x: auto;
+            }
+        </style>
+      <style>
+        /* Ensure the container takes up the full width and no padding */
+        .container-fluid {
+            padding-left: 0;
+            padding-right: 0;
+        }
+    
+        /* Center the pie chart inside the column */
+        .pie-column {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    
+        /* Adjust the pie chart size and ensure it stays centered */
+        #memoryPieChart {
+            max-width: 250px; /* Reduced size slightly to fit better */
+            max-height: 250px;
+            width: 100%; /* Ensure it takes the available width */
+            height: auto;
+        }
+    
+        /* Ensure the table scrolls when content overflows */
+        .scrollable-table {
+            max-height: 500px;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+    
+        /* Style the memory section text */
+        .memory-info {
+            font-size: 14px;  /* Smaller font size */
+            line-height: 1.3; /* Reduced line spacing */
+        }
+    
+        /* Add a vertical divider between the columns */
+        .divider {
+            border-left: 1px solid #ddd;
+            height: 100%;
+            margin-left: 20px;
+            padding-left: 20px;
+        }
+    
+    </style>
+    
+    <div class="container-fluid">
+        <!-- First Row: Bar Chart and Memory Section Info -->
         <div class="row mt-4">
-            <!-- Left Column: Scrollable Symbol Table -->
-            <div class="col-md-8 scrollable-table">
+            <!-- Left Column: Bar Chart -->
+            <div class="col-md-6 bar-column">
+                <canvas id="memoryBarChart"></canvas> <!-- Changed ID to memoryBarChart -->
+            </div>
+    
+            <!-- Right Column: Memory Section Text -->
+            <div class="col-md-6">
+                <div class="divider">
+                    <h4>Memory Sections:</h4>
+                    <div class="memory-info">
+                        <p>Text (Flash): <span id="textSectionSize">0</span> bytes</p>
+                        <p>BSS (RAM): <span id="bssSectionSize">0</span> bytes</p>
+                        <p>Data (Flash & RAM): <span id="dataSectionSize">0</span> bytes</p>
+                        <p>RO Data (Flash): <span id="rodataSectionSize">0</span> bytes</p>
+    
+                        <h4>Total Memory Usage:</h4>
+                        <p>Static RAM usage (boot-time): <span id="totalRamUsed">0</span> bytes</p>
+                        <p>Flash usage: <span id="totalFlashUsed">0</span> bytes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Second Row: Symbol Table -->
+        <div class="row mt-4">
+            <div class="col-md-12 scrollable-table">
                 <table id="symbolsTable" class="table table-bordered">
                     <thead>
                         <tr>
@@ -102,28 +245,11 @@
                     </tbody>
                 </table>
             </div>
-
-            <!-- Right Column: Pie Chart and Future Content -->
-            <div class="col-md-4">
-                <!-- Pie Chart Section inside a square container -->
-                <div class="mb-4">
-                    <canvas id="memoryPieChart"></canvas>
-                </div>
-
-                <!-- Future Section Below the Pie Chart -->
-                <div>
-                    <h4>Future Content Here</h4>
-                    <p>Total used flash: <span id="totalFlashUsed">0</span> bytes</p>
-                    <p>Total used RAM: <span id="totalRamUsed">0</span> bytes</p>
-
-                    <p>This section can be used for additional charts, text, or any other content in the future.</p>
-                </div>
-            </div>
         </div>
     </div>
 
     <script>
-  (function() {
+        (function () {
     const vscode = acquireVsCodeApi();
     let symbolsData = [];
     let sizeSortOrder = 1;
@@ -137,102 +263,119 @@
         sizeSortOrder = previousState.sizeSortOrder || 1;
         nameSortOrder = previousState.nameSortOrder || 1;
         sectionSizes = previousState.sectionSizes || {};  // Restore full sectionSizes
+        
+        // Re-apply the saved state to the HTML elements
         updateTable(symbolsData);
-        updatePieChart(sectionSizes);  // Use the restored sectionSizes
+        updateBarChart(sectionSizes); // Call the new bar chart update function
+
+        // Restore section sizes in text
+        document.getElementById('textSectionSize').textContent = sectionSizes.text || 0;
+        document.getElementById('bssSectionSize').textContent = sectionSizes.bss || 0;
+        document.getElementById('dataSectionSize').textContent = sectionSizes.data || 0;
+        document.getElementById('rodataSectionSize').textContent = sectionSizes.rodata || 0;
+
+        // Restore flash and RAM usage
         document.getElementById('totalFlashUsed').textContent = previousState.flashUsed || 0;
         document.getElementById('totalRamUsed').textContent = previousState.ramUsed || 0;
     }
 
-    // Load symbols when button is clicked
-    document.getElementById('loadSymbolsButton').addEventListener('click', () => {
-        vscode.postMessage({ command: 'loadSymbols' });
-    });
+            // Load symbols when button is clicked
+            document.getElementById('loadSymbolsButton').addEventListener('click', () => {
+                vscode.postMessage({ command: 'loadSymbols' });
+            });
 
-    // Sort by size when size header is clicked
-    document.getElementById('sizeHeader').addEventListener('click', () => {
-        symbolsData.sort((a, b) => {
-            const sizeA = parseInt(a.size); // Parse size as integer
-            const sizeB = parseInt(b.size);
-            return sizeSortOrder * (sizeA - sizeB);  // Sort ascending or descending
-        });
-        sizeSortOrder *= -1;  // Reverse sort order for next click
-        updateTable(symbolsData);
-        saveState();  // Save the updated state
-    });
+            // Sort by size when size header is clicked
+            document.getElementById('sizeHeader').addEventListener('click', () => {
+                symbolsData.sort((a, b) => {
+                    const sizeA = parseInt(a.size); // Parse size as integer
+                    const sizeB = parseInt(b.size);
+                    return sizeSortOrder * (sizeA - sizeB);  // Sort ascending or descending
+                });
+                sizeSortOrder *= -1;  // Reverse sort order for next click
+                updateTable(symbolsData);
+                saveState();  // Save the updated state
+            });
 
-    // Sort by name when name header is clicked
-    document.getElementById('nameHeader').addEventListener('click', () => {
-        symbolsData.sort((a, b) => {
-            const nameA = a.name.toLowerCase();
-            const nameB = b.name.toLowerCase();
-            if (nameA < nameB) return nameSortOrder * -1;
-            if (nameA > nameB) return nameSortOrder * 1;
-            return 0;
-        });
-        nameSortOrder *= -1;  // Reverse sort order for next click
-        updateTable(symbolsData);
-        saveState();  // Save the updated state
-    });
+            // Sort by name when name header is clicked
+            document.getElementById('nameHeader').addEventListener('click', () => {
+                symbolsData.sort((a, b) => {
+                    const nameA = a.name.toLowerCase();
+                    const nameB = b.name.toLowerCase();
+                    if (nameA < nameB) return nameSortOrder * -1;
+                    if (nameA > nameB) return nameSortOrder * 1;
+                    return 0;
+                });
+                nameSortOrder *= -1;  // Reverse sort order for next click
+                updateTable(symbolsData);
+                saveState();  // Save the updated state
+            });
 
-    // Receive message from extension and update table
+            // Event listener to receive messages from the extension
     window.addEventListener('message', event => {
         const message = event.data;
 
         if (message.command === 'displaySymbols') {
-            symbolsData = message.symbols || [];  // Update global symbolsData
-            sectionSizes = message.sectionSizes || {};  // Update global sectionSizes
+            symbolsData = message.symbols || [];
+            sectionSizes = message.sectionSizes || {};
             updateTable(symbolsData);
-            updatePieChart(sectionSizes);
+            updateBarChart(sectionSizes); // Call the new bar chart update function
 
+            // Update the section size text
+            document.getElementById('textSectionSize').textContent = sectionSizes.text || 0;
+            document.getElementById('bssSectionSize').textContent = sectionSizes.bss || 0;
+            document.getElementById('dataSectionSize').textContent = sectionSizes.data || 0;
+            document.getElementById('rodataSectionSize').textContent = sectionSizes.rodata || 0;
+
+            // Update total flash and RAM usage
             document.getElementById('totalFlashUsed').textContent = message.flashUsed || 0;
             document.getElementById('totalRamUsed').textContent = message.ramUsed || 0;
 
-            saveState();  // Save the updated state
+            // Save the current state
+            saveState();
         }
     });
+            // Function to update the table
+            function updateTable(symbolsData = []) {
+                const symbolsTableBody = document.querySelector('#symbolsTable tbody');
 
-    // Function to update the table
-    function updateTable(symbolsData = []) {
-        const symbolsTableBody = document.querySelector('#symbolsTable tbody');
+                if (!symbolsTableBody) {
+                    console.error("Table body not found");
+                    return;
+                }
 
-        if (!symbolsTableBody) {
-            console.error("Table body not found");
-            return;
-        }
+                // Clear existing rows
+                symbolsTableBody.innerHTML = '';
 
-        // Clear existing rows
-        symbolsTableBody.innerHTML = '';
+                if (symbolsData.length === 0) {
+                    console.error("No symbols data received.");
+                    return;
+                }
 
-        if (symbolsData.length === 0) {
-            console.error("No symbols data received.");
-            return;
-        }
+                symbolsData.forEach(symbol => {
+                    const row = document.createElement('tr');
+                    let badgeClass = '';
 
-        symbolsData.forEach(symbol => {
-            const row = document.createElement('tr');
-            let badgeClass = '';
+                    switch (symbol.section) {
+                        case '.text':
+                            badgeClass = 'bg-info';
+                            break;
+                        case '.bss':
+                            badgeClass = 'bg-success';
+                            break;
+                        case '.data':
+                            badgeClass = 'bg-secondary';
+                            break;
+                        case '.rodata':
+                            badgeClass = 'bg-danger';
+                            break;
+                        case '.bss (weak)':
+                            badgeClass = 'bg-primary';
+                            break;
+                        default:
+                            badgeClass = 'bg-dark';
+                    }
 
-            switch (symbol.section) {
-                case '.text':
-                    badgeClass = 'bg-info';
-                    break;
-                case '.bss':
-                    badgeClass = 'bg-success';
-                    break;
-                case '.data':
-                    badgeClass = 'bg-secondary';
-                    break;
-                case '.rodata':
-                    badgeClass = 'bg-danger';
-                    break;
-                case '.bss (weak)':
-                    badgeClass = 'bg-primary';
-                    break;
-                default:
-                    badgeClass = 'bg-dark';
-            }
-
-            row.innerHTML = `
+                    row.innerHTML = `
                 <td>${symbol.name}</td>
                 <td><span class="badge ${badgeClass}">${symbol.section}</span></td>
                 <td>${symbol.size}</td>
@@ -240,23 +383,23 @@
                 <td>${symbol.fileLocation}</td>
             `;
 
-            symbolsTableBody.appendChild(row);
-        });
-    }
+                    symbolsTableBody.appendChild(row);
+                });
+            }
 
-    // Function to update the pie chart
-    function updatePieChart(sectionSizes) {
-        const ctx = document.getElementById('memoryPieChart').getContext('2d');
+           // Function to update the bar chart
+    function updateBarChart(sectionSizes) {
+        const ctx = document.getElementById('memoryBarChart').getContext('2d');
 
         if (!sectionSizes || !ctx) {
-            console.error('No data provided for the pie chart or canvas context is missing');
+            console.error('No data provided for the bar chart or canvas context is missing');
             return;
         }
 
         const chartData = {
             labels: ['.text', '.bss', '.data', '.rodata'],
             datasets: [{
-                label: 'Memory Usage',
+                label: 'Memory Usage (Bytes)',
                 data: [
                     sectionSizes.text || 0,
                     sectionSizes.bss || 0,
@@ -268,16 +411,44 @@
         };
 
         new Chart(ctx, {
-            type: 'pie',
-            data: chartData,
-            options: {
-                maintainAspectRatio: true,
-                responsive: true,
-                legend: {
-                    position: 'top',
+    type: 'bar',
+    data: chartData,
+    options: {
+        maintainAspectRatio: true,
+        responsive: true,
+        animation: {
+            duration: 1000,  // Set duration of animation in milliseconds (e.g., 1000ms = 1 second)
+            easing: 'easeOutBounce'  // Easing function for the animation
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Bytes'
                 },
+                grid: {
+                    color: 'rgba(200, 200, 200, 0.3)',  // Lighter color for gridlines
+                    lineWidth: 1,                      // Thinner gridlines
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Sections'
+                },
+                grid: {
+                    color: 'rgba(200, 200, 200, 0.3)',  // Lighter color for gridlines
+                    lineWidth: 1,                      // Thinner gridlines
+                }
             }
-        });
+        }
+    }
+});
+
+
+    
+
     }
 
     // Function to save the current state of the webview
@@ -292,8 +463,7 @@
         });
     }
 }());
-
-
     </script>
 </body>
+
 </html>
