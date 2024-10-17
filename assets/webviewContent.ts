@@ -11,21 +11,18 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
     const popperJsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'assets', 'popper.min.js'));
     // make uri for cytoscape.min.js
     const cytoscapeJsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'assets', 'cytoscape.min.js'));
-
-
+    // make uri for cytoscape-dagre.js
+    const cytoscapeDagreJsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'assets', 'cytoscape-dagre.js'));
+    // make uri for dagre.min.js
+    const dagreJsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'assets', 'dagre.min.js'));
 
     // Replace placeholders in the HTML content
     htmlContent = htmlContent.replace('{{bootstrapUri}}', bootstrapUri.toString());
     htmlContent = htmlContent.replace('{{chartJsUri}}', chartJsUri.toString());
     htmlContent = htmlContent.replace('{{popperJsUri}}', popperJsUri.toString());
     htmlContent = htmlContent.replace('{{cytoscapeJsUri}}', cytoscapeJsUri.toString());
-    // show me the uri strings
-    vscode.window.showInformationMessage(`bootstrapUri: ${bootstrapUri.toString()}`);
-    vscode.window.showInformationMessage(`chartJsUri: ${chartJsUri.toString()}`);
-    vscode.window.showInformationMessage(`popperJsUri: ${popperJsUri.toString()}`);
-    vscode.window.showInformationMessage(`cytoscapeJsUri: ${cytoscapeJsUri.toString()}`);
-
-    
+    htmlContent = htmlContent.replace('{{dagreJsUri}}', dagreJsUri.toString());
+    htmlContent = htmlContent.replace('{{cytoscapeDagreJsUri}}', cytoscapeDagreJsUri.toString());
 
     return htmlContent;
 }

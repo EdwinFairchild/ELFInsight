@@ -7,23 +7,34 @@
     <!-- <meta http-equiv="Content-Security-Policy"
         content="default-src 'none'; img-src vscode-resource:; script-src 'unsafe-inline' {{cspSource}}; style-src vscode-resource: 'unsafe-inline' {{cspSource}};">
          -->
-        <meta http-equiv="Content-Security-Policy"
+    <meta http-equiv="Content-Security-Policy"
         content="default-src 'none'; img-src vscode-resource:; script-src 'unsafe-inline' {{cspSource}} vscode-resource:; style-src vscode-resource: 'unsafe-inline' {{cspSource}};">
-    
-   
+
+
     <title>ELFInsight Webview</title>
     <link rel="stylesheet" href="{{bootstrapUri}}">
     <script src="{{popperJsUri}}"></script>
     <script src="{{chartJsUri}}"></script>
     <script src="{{cytoscapeJsUri}}"></script>
+    <script src="{{dagreJsUri}}"></script>
+    <script src="{{cytoscapeDagreJsUri}}"></script>
 
     <style>
+        body {
+            padding-top: 20px;
+            /* Adjust the value as needed */
+            margin: 0;
+            /* Remove default margin */
+            box-sizing: border-box;
+            /* Ensure padding is included in the total width and height */
+        }
 
-  .tab {
-    width: 500px; /* You can set the default width here */
-    padding: 10px;
-    border: 1px solid #ccc;
-  }
+        .tab {
+            width: 500px;
+            /* You can set the default width here */
+            padding: 10px;
+            border: 1px solid #6a49ff;
+        }
 
         /* Increase size of the left column (table) and add scrolling */
         .scrollable-table {
@@ -32,7 +43,7 @@
             overflow-y: auto;
             overflow-x: auto;
         }
-    
+
         /* Center align all table texts */
         #symbolsTable td,
         #symbolsTable th {
@@ -42,40 +53,40 @@
             text-overflow: ellipsis;
             max-height: 1.5em;
         }
-    
+
         /* Adjust the table layout for better responsiveness */
         #symbolsTable {
             table-layout: fixed;
             width: 100%;
         }
-    
+
         /* Set specific column widths */
         #symbolsTable th:nth-child(1),
         #symbolsTable td:nth-child(1) {
             width: 120px;
         }
-    
+
         #symbolsTable th:nth-child(2),
         #symbolsTable td:nth-child(2) {
             width: 75px;
         }
-    
+
         #symbolsTable th:nth-child(3),
         #symbolsTable td:nth-child(3) {
             width: 75px;
         }
-    
+
         #symbolsTable th:nth-child(4),
         #symbolsTable td:nth-child(4) {
             width: 75px;
         }
-    
+
         /* Reduce the size of the right column (for the bar chart) */
         .col-md-4 {
             padding: 15px;
             max-width: 25%;
         }
-    
+
         /* Limit the size of the pie chart */
         #memoryPieChart {
             max-width: 300px;
@@ -83,7 +94,7 @@
             width: 100%;
             height: auto;
         }
-    
+
         /* Center the pie chart inside the right column */
         .right-column,
         .pie-column {
@@ -92,7 +103,7 @@
             justify-content: center;
             align-items: center;
         }
-    
+
         /* Bar chart styling */
         .chart-border {
             border: 1px solid #ccc;
@@ -102,24 +113,25 @@
             display: flex;
             align-items: center;
         }
-    
+
         #memoryBarChart {
             width: 100% !important;
             height: 100% !important;
             max-height: 350px;
         }
-    
+
         /* Right column content centered */
         .divider {
             height: 100%;
         }
-    
+
         /* Memory list adjustments */
-        .memory-list, .list-group{
-           
+        .memory-list,
+        .list-group {
+
             width: 100%;
         }
-    
+
         /* Highlighted text styling */
         mark {
             background-color: #ffeb3b;
@@ -127,525 +139,624 @@
             padding: 0;
             border-radius: 2px;
         }
-    
+
+        .custom-tab {
+            width: 500px;
+            /* You can set the default width here */
+            padding: 10px;
+            border: 1px solid #aeff00;
+        }
+
+        /* Style for active nav-link (tab) */
+        .nav-link.active {
+            background-color: #5CA8DB;
+            /* Desired background color for active tab */
+            color: white;
+            /* Text color for better readability */
+            border-color: #dee2e6 #dee2e6 #fff;
+            /* Optional: Adjust borders if necessary */
+            border-radius: 5px 5px 0 0;
+            /* Rounded top corners */
+        }
+
+        /* Style for inactive nav-link (tabs) */
+        .nav-link {
+            background-color: transparent;
+            /* Transparent background for inactive tabs */
+            color: #5CA8DB;
+            /* Text color for inactive tabs */
+            border: 1px solid #dee2e6;
+            /* Border to separate tabs */
+            border-bottom: none;
+            /* Remove bottom border to connect with tab pane */
+            border-radius: 5px 5px 0 0;
+            /* Rounded top corners */
+        }
+
+
         /* Ensure the container takes up the full width and no padding */
         .container-fluid {
             padding-left: 0;
             padding-right: 0;
         }
+
+        /* Call Graph Wrapper */
+        #callGraphWrapper {
+            padding-top: 20px;
+            /* Add desired top padding */
+            position: relative;
+            width: 100%;
+        }
+
+        /* Call Graph Container */
+        #callGraphContainer {
+            width: 100%;
+            height: 800px;
+            padding: 0;
+            border: 1px solid #353535;
+            border-radius: 8px;
+            margin: 0;
+            box-sizing: border-box;
+            position: relative;
+            /* Ensure proper positioning */
+            overflow: hidden;
+        }
+
+        /* Ensure Cytoscape Canvas Respects Positioning */
+        #callGraphContainer>canvas {
+            position: absolute;
+            top: 0;
+            /* Adjust if necessary */
+            left: 0;
+        }
     </style>
-    
+
 </head>
 
 <body>
- 
-   <!-- Bootstrap Tabs Navigation -->
-<ul class="nav nav-tabs" role="tablist">
-  <li class="nav-item" role="presentation">
-    <a class="nav-link active" data-bs-toggle="tab" href="#overview" aria-selected="true" role="tab">Overview</a>
-  </li>
-  <li class="nav-item" role="presentation">
-    <a class="nav-link" data-bs-toggle="tab" href="#callGraphs" aria-selected="false" role="tab">Call Graphs</a>
-  </li>
-  <li class="nav-item" role="presentation">
-    <a class="nav-link" data-bs-toggle="tab" href="#detailedReports" aria-selected="false" role="tab">Detailed Reports</a>
-  </li>
-</ul>
 
-<!-- Bootstrap Tab Content -->
-<div id="myTabContent" class="tab-content">
-    <!-- Overview Tab -->
-    <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
-      <div class="container-fluid">
-        <!-------------------------------------------- First Row: Intro Text and Button --------------------------->
-        <div class="row">
-            <div class="col-12">
-                <button id="loadSymbolsButton" class="btn btn-outline-primary mt-3">Load ELF</button>
-            </div>
-        </div>
-  
-        <!-- First Row: Bar Chart and Memory Section Info -->
-        <div class="row mt-4 d-flex align-items-stretch">
-            <div class="col-md-7 bar-column d-flex">
-                <div class="chart-border flex-fill">
-                    <canvas id="memoryBarChart"></canvas>
+    <!-- Bootstrap Tabs Navigation -->
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active" data-bs-toggle="tab" href="#overview" aria-selected="true"
+                role="tab">Overview</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" data-bs-toggle="tab" href="#callGraphs" aria-selected="false" role="tab">Call Graphs</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" data-bs-toggle="tab" href="#detailedReports" aria-selected="false" role="tab">Detailed
+                Reports</a>
+        </li>
+    </ul>
+
+    <!-- Bootstrap Tab Content -->
+    <div id="myTabContent" class="tab-content">
+        <!-- Overview Tab -->
+        <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+            <div class="container-fluid">
+                <!-------------------------------------------- First Row: Intro Text and Button --------------------------->
+                <div class="row">
+                    <div class="col-12">
+                        <button id="loadSymbolsButton" class="btn btn-outline-primary mt-3">Load ELF</button>
+                    </div>
                 </div>
-            </div>
-  
-            <!-- Right Column: Memory Section Info -->
-            <div class="col-md-5 d-flex">
-                <div class="divider flex-fill d-flex flex-column justify-content-center">
-                    <div class="memory-list w-100">
-                        <h3>Memory Sections:</h3>
-                        <ul class="list-group w-100 mb-3">
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Text (Flash)
-                                <span class="badge bg-info rounded-pill"><span id="textSectionSize">0</span> bytes</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                BSS (RAM)
-                                <span class="badge bg-success rounded-pill"><span id="bssSectionSize">0</span> bytes</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Data (Flash & RAM)
-                                <span class="badge bg-secondary rounded-pill"><span id="dataSectionSize">0</span> bytes</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                RO Data (Flash)
-                                <span class="badge bg-danger rounded-pill"><span id="rodataSectionSize">0</span> bytes</span>
-                            </li>
-                        </ul>
-  
-                        <h3>Total Memory Usage:</h3>
-                        <ul class="list-group w-100">
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Static RAM usage (boot-time)
-                                <span class="badge bg-dark rounded-pill"><span id="totalRamUsed">0</span> bytes</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Flash usage
-                                <span class="badge bg-dark rounded-pill"><span id="totalFlashUsed">0</span> bytes</span>
-                            </li>
-                        </ul>
+
+                <!-- First Row: Bar Chart and Memory Section Info -->
+                <div class="row mt-4 d-flex align-items-stretch">
+                    <div class="col-md-7 bar-column d-flex">
+                        <div class="chart-border flex-fill">
+                            <canvas id="memoryBarChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Memory Section Info -->
+                    <div class="col-md-5 d-flex">
+                        <div class="divider flex-fill d-flex flex-column justify-content-center">
+                            <div class="memory-list w-100">
+                                <h3>Memory Sections:</h3>
+                                <ul class="list-group w-100 mb-3">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Text (Flash)
+                                        <span class="badge bg-info rounded-pill"><span id="textSectionSize">0</span>
+                                            bytes</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        BSS (RAM)
+                                        <span class="badge bg-success rounded-pill"><span id="bssSectionSize">0</span>
+                                            bytes</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Data (Flash & RAM)
+                                        <span class="badge bg-secondary rounded-pill"><span
+                                                id="dataSectionSize">0</span> bytes</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        RO Data (Flash)
+                                        <span class="badge bg-danger rounded-pill"><span id="rodataSectionSize">0</span>
+                                            bytes</span>
+                                    </li>
+                                </ul>
+
+                                <h3>Total Memory Usage:</h3>
+                                <ul class="list-group w-100">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Static RAM usage (boot-time)
+                                        <span class="badge bg-dark rounded-pill"><span id="totalRamUsed">0</span>
+                                            bytes</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Flash usage
+                                        <span class="badge bg-dark rounded-pill"><span id="totalFlashUsed">0</span>
+                                            bytes</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Second Row: Symbol Table -->
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="search-section mt-3">
+                            <h4>Search Symbols</h4>
+                            <div class="input-group mb-3">
+                                <input type="text" id="searchInput" class="form-control"
+                                    placeholder="Enter symbol name">
+                                <button class="btn btn-outline-secondary" type="button"
+                                    id="searchButton">Search</button>
+                            </div>
+                        </div>
+                        <div class="scrollable-table">
+                            <table id="symbolsTable" class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th id="nameHeader" style="cursor: pointer;">Name &#x21C5;</th>
+                                        <th>Section</th>
+                                        <th id="sizeHeader" style="cursor: pointer;">Size &#x21C5;</th>
+                                        <th>Address</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Table data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-  
-        <!-- Second Row: Symbol Table -->
-        <div class="row mt-4">
-            <div class="col-md-12">
-                <div class="search-section mt-3">
-                    <h4>Search Symbols</h4>
-                    <div class="input-group mb-3">
-                        <input type="text" id="searchInput" class="form-control" placeholder="Enter symbol name">
-                        <button class="btn btn-outline-secondary" type="button" id="searchButton">Search</button>
-                    </div>
-                </div>
-                <div class="scrollable-table">
-                    <table id="symbolsTable" class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th id="nameHeader" style="cursor: pointer;">Name &#x21C5;</th>
-                                <th id="sectionHeader" style="cursor: pointer;">Section &#x21C5;</th>
-                                <th id="sizeHeader" style="cursor: pointer;">Size &#x21C5;</th>
-                                <th>Address</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Table data will be populated here -->
-                        </tbody>
-                    </table>
+
+        <!-- Call Graphs Tab -->
+        <div class="tab-pane fade" id="callGraphs" role="tabpanel" aria-labelledby="callGraphs-tab">
+            <div class="container-fluid p-0 m-0">
+                <div id="callGraphWrapper" style="padding-top: 20px;">
+                    <div id="callGraphContainer" style="width: 100%; height: 800px; border-radius: 8px;"></div>
                 </div>
             </div>
         </div>
-      </div>
+
+
+
+
+
+        <!-- Detailed Reports Tab (placeholder content) -->
+        <div class="tab-pane fade" id="detailedReports" role="tabpanel" aria-labelledby="detailedReports-tab">
+            <p>Detailed reports and insights will be added here.</p>
+        </div>
     </div>
-  
-    <!-- Call Graphs Tab (placeholder content) -->
-    <div class="tab-pane fade" id="callGraphs" role="tabpanel" aria-labelledby="callGraphs-tab">
-      <p>Call graph visualization and analysis will be added here.</p>
-      <div id="callGraphContainer" style="width: 100%; height: 500px;"></div>
-    </div>
-  
-    <!-- Detailed Reports Tab (placeholder content) -->
-    <div class="tab-pane fade" id="detailedReports" role="tabpanel" aria-labelledby="detailedReports-tab">
-      <p>Detailed reports and insights will be added here.</p>
-    </div>
-  </div>
-  <!-------------------------------CAll graph ----------------->
+    <!-------------------------------CAll graph ----------------->
 
 
 
 
-            <script>
-                (function () {
-                    const vscode = acquireVsCodeApi();
-                    let symbolsData = [];
-                    let sizeSortOrder = 1;
-                    let nameSortOrder = 1;
-                    let sectionSizes = {};
+    <script>
+        (function () {
+            const vscode = acquireVsCodeApi();
+            let symbolsData = [];
+            let sizeSortOrder = 1;
+            let nameSortOrder = 1;
+            let sectionSizes = {};
 
-                    // Restore state if available
-                    const previousState = vscode.getState();
-                    if (previousState) {
-                        symbolsData = previousState.symbolsData || [];
-                        sizeSortOrder = previousState.sizeSortOrder || 1;
-                        nameSortOrder = previousState.nameSortOrder || 1;
-                        sectionSizes = previousState.sectionSizes || {};  // Restore full sectionSizes
+            // Restore state if available
+            const previousState = vscode.getState();
+            if (previousState) {
+                symbolsData = previousState.symbolsData || [];
+                sizeSortOrder = previousState.sizeSortOrder || 1;
+                nameSortOrder = previousState.nameSortOrder || 1;
+                sectionSizes = previousState.sectionSizes || {};  // Restore full sectionSizes
 
-                        // Re-apply the saved state to the HTML elements
-                        updateTable(symbolsData);
-                        updateBarChart(sectionSizes); // Call the new bar chart update function
+                // Re-apply the saved state to the HTML elements
+                updateTable(symbolsData);
+                updateBarChart(sectionSizes); // Call the new bar chart update function
 
-                        // Restore section sizes in text
-                        document.getElementById('textSectionSize').textContent = sectionSizes.text || 0;
-                        document.getElementById('bssSectionSize').textContent = sectionSizes.bss || 0;
-                        document.getElementById('dataSectionSize').textContent = sectionSizes.data || 0;
-                        document.getElementById('rodataSectionSize').textContent = sectionSizes.rodata || 0;
+                // Restore section sizes in text
+                document.getElementById('textSectionSize').textContent = sectionSizes.text || 0;
+                document.getElementById('bssSectionSize').textContent = sectionSizes.bss || 0;
+                document.getElementById('dataSectionSize').textContent = sectionSizes.data || 0;
+                document.getElementById('rodataSectionSize').textContent = sectionSizes.rodata || 0;
 
-                        // Restore flash and RAM usage
-                        document.getElementById('totalFlashUsed').textContent = previousState.flashUsed || 0;
-                        document.getElementById('totalRamUsed').textContent = previousState.ramUsed || 0;
+                // Restore flash and RAM usage
+                document.getElementById('totalFlashUsed').textContent = previousState.flashUsed || 0;
+                document.getElementById('totalRamUsed').textContent = previousState.ramUsed || 0;
+            }
+            // Add event listener for the search button
+            document.getElementById('searchButton').addEventListener('click', performSearch);
+
+            // Allow pressing 'Enter' to trigger the search
+            document.getElementById('searchInput').addEventListener('keyup', function (event) {
+                if (event.key === 'Enter') {
+                    performSearch();
+                }
+            });
+
+            // Optional: Update table as user types
+            document.getElementById('searchInput').addEventListener('input', performSearch);
+
+
+            // Load symbols when button is clicked
+            document.getElementById('loadSymbolsButton').addEventListener('click', () => {
+                vscode.postMessage({ command: 'loadSymbols' });
+            });
+
+            // Sort by size when size header is clicked
+            document.getElementById('sizeHeader').addEventListener('click', () => {
+                symbolsData.sort((a, b) => sizeSortOrder * (a.size - b.size));  // Direct numerical comparison
+                sizeSortOrder *= -1;  // Reverse sort order for next click
+                updateTable(symbolsData);
+                saveState();  // Save the updated state
+            });
+
+            // Sort by name when name header is clicked
+            document.getElementById('nameHeader').addEventListener('click', () => {
+                symbolsData.sort((a, b) => {
+                    const nameA = a.name.toLowerCase();
+                    const nameB = b.name.toLowerCase();
+                    if (nameA < nameB) return nameSortOrder * -1;
+                    if (nameA > nameB) return nameSortOrder * 1;
+                    return 0;
+                });
+                nameSortOrder *= -1;  // Reverse sort order for next click
+                updateTable(symbolsData);
+                saveState();  // Save the updated state
+            });
+            document.addEventListener('DOMContentLoaded', function () {
+                var tabs = document.querySelectorAll('.nav-link');
+                tabs.forEach(function (tab) {
+                    tab.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        var target = this.getAttribute('href');
+
+                        // Remove 'active' class from all nav-links
+                        tabs.forEach(function (t) {
+                            t.classList.remove('active');
+                        });
+
+                        // Add 'active' class to the clicked nav-link
+                        this.classList.add('active');
+
+                        // Remove 'active' and 'show' from all tab panes
+                        document.querySelectorAll('.tab-pane').forEach(function (pane) {
+                            pane.classList.remove('active', 'show');
+                        });
+
+                        // Add 'active' and 'show' to the target tab pane
+                        document.querySelector(target).classList.add('active', 'show');
+                    });
+                });
+            });
+
+            // Event listener to receive messages from the extension
+            window.addEventListener('message', event => {
+                const message = event.data;
+
+                if (message.command === 'displaySymbols') {
+                    symbolsData = message.symbols || [];
+                    sectionSizes = message.sectionSizes || {};
+                    updateTable(symbolsData);
+                    updateBarChart(sectionSizes); // Call the new bar chart update function
+
+                    // Update the section size text
+                    document.getElementById('textSectionSize').textContent = sectionSizes.text || 0;
+                    document.getElementById('bssSectionSize').textContent = sectionSizes.bss || 0;
+                    document.getElementById('dataSectionSize').textContent = sectionSizes.data || 0;
+                    document.getElementById('rodataSectionSize').textContent = sectionSizes.rodata || 0;
+
+                    // Update total flash and RAM usage
+                    document.getElementById('totalFlashUsed').textContent = message.flashUsed || 0;
+                    document.getElementById('totalRamUsed').textContent = message.ramUsed || 0;
+
+                    // Save the current state
+                    saveState();
+                }
+            });
+            // Function to update the table
+            // Modify updateTable to accept query parameter for highlighting
+            function updateTable(data, query = '') {
+                const symbolsTableBody = document.querySelector('#symbolsTable tbody');
+
+                if (!symbolsTableBody) {
+                    console.error("Table body not found");
+                    return;
+                }
+
+                // Clear existing rows
+                symbolsTableBody.innerHTML = '';
+
+                if (!data || data.length === 0) {
+                    // Display a message when no data is available
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td colspan="5">No symbols found.</td>`;
+                    symbolsTableBody.appendChild(row);
+                    return;
+                }
+
+                data.forEach(symbol => {
+                    const row = document.createElement('tr');
+                    let badgeClass = '';
+
+                    // Determine badge class based on section
+                    switch (symbol.section) {
+                        case '.text':
+                            badgeClass = 'bg-info';
+                            break;
+                        case '.bss':
+                            badgeClass = 'bg-success';
+                            break;
+                        case '.data':
+                            badgeClass = 'bg-secondary';
+                            break;
+                        case '.rodata':
+                            badgeClass = 'bg-danger';
+                            break;
+                        default:
+                            badgeClass = 'bg-dark';
                     }
-                    // Add event listener for the search button
-                    document.getElementById('searchButton').addEventListener('click', performSearch);
 
-                    // Allow pressing 'Enter' to trigger the search
-                    document.getElementById('searchInput').addEventListener('keyup', function (event) {
-                        if (event.key === 'Enter') {
-                            performSearch();
+                    // Highlight matching text in the symbol name
+                    let symbolName = symbol.name;
+                    if (query) {
+                        const regex = new RegExp(`(${query})`, 'gi');
+                        symbolName = symbolName.replace(regex, '<mark>$1</mark>');
+                    }
+
+                    // Format size with commas
+                    const formattedSize = symbol.size.toLocaleString();
+
+                    row.innerHTML = `
+            <td>${symbolName}</td>
+            <td><span class="badge ${badgeClass}">${symbol.section}</span></td>
+            <td>${formattedSize}</td>
+            <td>${symbol.address}</td>
+        `;
+
+                    symbolsTableBody.appendChild(row);
+                });
+            }
+
+            function performSearch() {
+                const query = document.getElementById('searchInput').value.toLowerCase().trim();
+
+                if (!query) {
+                    // If the search query is empty, display all symbols
+                    updateTable(symbolsData);
+                    return;
+                }
+
+                // Filter symbolsData based on the search query
+                const filteredData = symbolsData.filter(symbol => symbol.name.toLowerCase().includes(query));
+
+                // Update the table with the filtered data
+                updateTable(filteredData, query);
+            }
+
+            // Function to update the bar chart
+            function updateBarChart(sectionSizes) {
+                const ctx = document.getElementById('memoryBarChart').getContext('2d');
+
+                if (!sectionSizes || !ctx) {
+                    console.error('No data provided for the bar chart or canvas context is missing');
+                    return;
+                }
+
+                const chartData = {
+                    labels: ['.text', '.bss', '.data', '.rodata'],
+                    datasets: [{
+                        label: 'Memory Usage (Bytes)',
+                        data: [
+                            sectionSizes.text || 0,
+                            sectionSizes.bss || 0,
+                            sectionSizes.data || 0,
+                            sectionSizes.rodata || 0
+                        ],
+                        backgroundColor: ['#36a2eb', '#4caf50', '#ffcd56', '#ff6384']
+                    }]
+                };
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        animation: {
+                            duration: 1000,  // Set duration of animation in milliseconds (e.g., 1000ms = 1 second)
+                            easing: 'easeOutBounce'  // Easing function for the animation
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Bytes'
+                                },
+                                grid: {
+                                    color: 'rgba(200, 200, 200, 0.3)',  // Lighter color for gridlines
+                                    lineWidth: 1,                      // Thinner gridlines
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Sections'
+                                },
+                                grid: {
+                                    color: 'rgba(200, 200, 200, 0.3)',  // Lighter color for gridlines
+                                    lineWidth: 1,                      // Thinner gridlines
+                                }
+                            }
+                        }
+                    }
+                });
+
+
+
+
+            }
+
+            // Function to save the current state of the webview
+            function saveState() {
+                vscode.setState({
+                    symbolsData,
+                    sizeSortOrder,
+                    nameSortOrder,
+                    sectionSizes,  // Save full sectionSizes object
+                    flashUsed: document.getElementById('totalFlashUsed').textContent || 0,
+                    ramUsed: document.getElementById('totalRamUsed').textContent || 0
+                });
+            }
+
+            //---------------------------------------------------------------------------------------------------------------------------------------
+            // Function to normalize addresses (remove '0x' prefix and convert to lowercase)
+            // Function to normalize addresses (remove '0x' prefix and convert to lowercase)
+
+            function normalizeAddress(address) {
+                return address.toLowerCase().replace(/^0x/, '').padStart(8, '0');
+            }
+
+            window.addEventListener('message', event => {
+                const message = event.data;
+                if (message.command === 'displayCallGraph') {
+                    const graphData = message.graph;
+                    const addressToFunctionName = graphData.addressToFunctionName;
+
+                    console.log('Address to Function Name Map:', addressToFunctionName);  // Debugging
+
+                    const elements = [];
+                    const nodeMap = new Map();  // Map to track nodes and prevent duplicates
+
+                    // Create nodes
+                    console.log("Creating nodes...");
+                    graphData.nodes.forEach(node => {
+                        const nodeId = normalizeAddress(node.address);
+                        const label = node.name || addressToFunctionName[nodeId] || node.address;
+                        const functionType = node.functionType || 'normal'; // Assign function type
+
+                        // Log node details
+                        console.log(`Node: ID=${nodeId}, Label=${label}`);
+
+                        if (!nodeMap.has(nodeId)) {
+                            elements.push({
+                                data: {
+                                    id: nodeId,
+                                    label: label,
+                                    functionType: functionType
+                                }
+                            });
+                            nodeMap.set(nodeId, label);
                         }
                     });
 
-                    // Optional: Update table as user types
-                    document.getElementById('searchInput').addEventListener('input', performSearch);
+                    // Create edges
+                    Object.keys(graphData.edges).forEach(fromAddress => {
+                        graphData.edges[fromAddress].forEach(toAddress => {
+                            fromAddress = normalizeAddress(fromAddress);
+                            toAddress = normalizeAddress(toAddress);
 
+                            // Log edge details
+                            console.log(`Edge: From=${fromAddress}, To=${toAddress}`);
 
-                    // Load symbols when button is clicked
-                    document.getElementById('loadSymbolsButton').addEventListener('click', () => {
-                        vscode.postMessage({ command: 'loadSymbols' });
-                    });
-
-                    // Sort by size when size header is clicked
-                    document.getElementById('sizeHeader').addEventListener('click', () => {
-                        symbolsData.sort((a, b) => {
-                            const sizeA = parseInt(a.size); // Parse size as integer
-                            const sizeB = parseInt(b.size);
-                            return sizeSortOrder * (sizeA - sizeB);  // Sort ascending or descending
-                        });
-                        sizeSortOrder *= -1;  // Reverse sort order for next click
-                        updateTable(symbolsData);
-                        saveState();  // Save the updated state
-                    });
-
-                    // Sort by name when name header is clicked
-                    document.getElementById('nameHeader').addEventListener('click', () => {
-                        symbolsData.sort((a, b) => {
-                            const nameA = a.name.toLowerCase();
-                            const nameB = b.name.toLowerCase();
-                            if (nameA < nameB) return nameSortOrder * -1;
-                            if (nameA > nameB) return nameSortOrder * 1;
-                            return 0;
-                        });
-                        nameSortOrder *= -1;  // Reverse sort order for next click
-                        updateTable(symbolsData);
-                        saveState();  // Save the updated state
-                    });
-                    document.addEventListener('DOMContentLoaded', function () {
-                        var tabs = document.querySelectorAll('.nav-link');
-                        tabs.forEach(function (tab) {
-                            tab.addEventListener('click', function (event) {
-                                event.preventDefault();
-                                var target = this.getAttribute('href');
-                                document.querySelectorAll('.tab-pane').forEach(function (pane) {
-                                    pane.classList.remove('active', 'show');
+                            // Use addressToFunctionName to get labels
+                            if (!nodeMap.has(fromAddress)) {
+                                const label = addressToFunctionName[fromAddress] || `Function at ${fromAddress}`;
+                                elements.push({
+                                    data: { id: fromAddress, label: label }
                                 });
-                                document.querySelector(target).classList.add('active', 'show');
+                                nodeMap.set(fromAddress, label);
+                            }
+
+                            if (!nodeMap.has(toAddress)) {
+                                const label = addressToFunctionName[toAddress] || `Function at ${toAddress}`;
+                                elements.push({
+                                    data: { id: toAddress, label: label }
+                                });
+                                nodeMap.set(toAddress, label);
+                            }
+
+                            elements.push({
+                                data: { source: fromAddress, target: toAddress }
                             });
                         });
                     });
 
-                    // Sort by section (badge text) NOT WORKING
-                    // document.getElementById('sectionHeader').addEventListener('click', () => {
-                    //     symbolsData.sort((a, b) => {
-                    //         const sectionA = getBadgeText(a.section);
-                    //         const sectionB = getBadgeText(b.section);
-                    //         if (sectionA < sectionB) return sectionSortOrder * -1;
-                    //         if (sectionA > sectionB) return sectionSortOrder * 1;
-                    //         return 0;
-                    //     });
-                    //     sectionSortOrder *= -1;
-                    //     updateTable(symbolsData);
-                    // });               
+                    // console.log('Elements after processing:', elements);  // Log the final elements
 
-                    // Event listener to receive messages from the extension
-                    window.addEventListener('message', event => {
-                        const message = event.data;
-
-                        if (message.command === 'displaySymbols') {
-                            symbolsData = message.symbols || [];
-                            sectionSizes = message.sectionSizes || {};
-                            updateTable(symbolsData);
-                            updateBarChart(sectionSizes); // Call the new bar chart update function
-
-                            // Update the section size text
-                            document.getElementById('textSectionSize').textContent = sectionSizes.text || 0;
-                            document.getElementById('bssSectionSize').textContent = sectionSizes.bss || 0;
-                            document.getElementById('dataSectionSize').textContent = sectionSizes.data || 0;
-                            document.getElementById('rodataSectionSize').textContent = sectionSizes.rodata || 0;
-
-                            // Update total flash and RAM usage
-                            document.getElementById('totalFlashUsed').textContent = message.flashUsed || 0;
-                            document.getElementById('totalRamUsed').textContent = message.ramUsed || 0;
-
-                            // Save the current state
-                            saveState();
-                        }
-                    });
-                    // Function to update the table
-                    // Modify updateTable to accept query parameter for highlighting
-                    function updateTable(data, query = '') {
-                        const symbolsTableBody = document.querySelector('#symbolsTable tbody');
-
-                        if (!symbolsTableBody) {
-                            console.error("Table body not found");
-                            return;
-                        }
-
-                        // Clear existing rows
-                        symbolsTableBody.innerHTML = '';
-
-                        if (!data || data.length === 0) {
-                            // Display a message when no data is available
-                            const row = document.createElement('tr');
-                            row.innerHTML = `<td colspan="5">No symbols found.</td>`;
-                            symbolsTableBody.appendChild(row);
-                            return;
-                        }
-
-                        data.forEach(symbol => {
-                            const row = document.createElement('tr');
-                            let badgeClass = '';
-
-                            // Determine badge class based on section
-                            switch (symbol.section) {
-                                case '.text':
-                                    badgeClass = 'bg-info';
-                                    break;
-                                case '.bss':
-                                    badgeClass = 'bg-success';
-                                    break;
-                                case '.data':
-                                    badgeClass = 'bg-secondary';
-                                    break;
-                                case '.rodata':
-                                    badgeClass = 'bg-danger';
-                                    break;
-                                default:
-                                    badgeClass = 'bg-dark';
-                            }
-
-                            // Highlight matching text in the symbol name
-                            let symbolName = symbol.name;
-                            if (query) {
-                                const regex = new RegExp(`(${query})`, 'gi');
-                                symbolName = symbolName.replace(regex, '<mark>$1</mark>');
-                            }
-
-                            row.innerHTML = `
-            <td>${symbolName}</td>
-            <td><span class="badge ${badgeClass}">${symbol.section}</span></td>
-            <td>${symbol.size}</td>
-            <td>${symbol.address}</td>
-           
-        `;
-
-                            symbolsTableBody.appendChild(row);
-                        });
-                    }
-                    function performSearch() {
-                        const query = document.getElementById('searchInput').value.toLowerCase().trim();
-
-                        if (!query) {
-                            // If the search query is empty, display all symbols
-                            updateTable(symbolsData);
-                            return;
-                        }
-
-                        // Filter symbolsData based on the search query
-                        const filteredData = symbolsData.filter(symbol => symbol.name.toLowerCase().includes(query));
-
-                        // Update the table with the filtered data
-                        updateTable(filteredData, query);
-                    }
-
-                    // Function to update the bar chart
-                    function updateBarChart(sectionSizes) {
-                        const ctx = document.getElementById('memoryBarChart').getContext('2d');
-
-                        if (!sectionSizes || !ctx) {
-                            console.error('No data provided for the bar chart or canvas context is missing');
-                            return;
-                        }
-
-                        const chartData = {
-                            labels: ['.text', '.bss', '.data', '.rodata'],
-                            datasets: [{
-                                label: 'Memory Usage (Bytes)',
-                                data: [
-                                    sectionSizes.text || 0,
-                                    sectionSizes.bss || 0,
-                                    sectionSizes.data || 0,
-                                    sectionSizes.rodata || 0
-                                ],
-                                backgroundColor: ['#36a2eb', '#4caf50', '#ffcd56', '#ff6384']
-                            }]
-                        };
-
-                        new Chart(ctx, {
-                            type: 'bar',
-                            data: chartData,
-                            options: {
-                                maintainAspectRatio: false,
-                                responsive: true,
-                                animation: {
-                                    duration: 1000,  // Set duration of animation in milliseconds (e.g., 1000ms = 1 second)
-                                    easing: 'easeOutBounce'  // Easing function for the animation
-                                },
-                                scales: {
-                                    y: {
-                                        beginAtZero: true,
-                                        title: {
-                                            display: true,
-                                            text: 'Bytes'
-                                        },
-                                        grid: {
-                                            color: 'rgba(200, 200, 200, 0.3)',  // Lighter color for gridlines
-                                            lineWidth: 1,                      // Thinner gridlines
-                                        }
-                                    },
-                                    x: {
-                                        title: {
-                                            display: true,
-                                            text: 'Sections'
-                                        },
-                                        grid: {
-                                            color: 'rgba(200, 200, 200, 0.3)',  // Lighter color for gridlines
-                                            lineWidth: 1,                      // Thinner gridlines
-                                        }
-                                    }
+                    // Initialize Cytoscape with the 'cose' layout
+                    const cy = cytoscape({
+                        container: document.getElementById('callGraphContainer'),
+                        elements: elements,
+                        style: [
+                            {
+                                selector: 'node',
+                                style: {
+                                    'shape': 'roundrectangle', // Rounded rectangles
+                                    'background-color': '#68BDF6',
+                                    'border-width': 2,
+                                    'border-color': '#5CA8DB',
+                                    'label': 'data(label)',
+                                    'width': 'label',
+                                    'height': 'label',
+                                    'padding': '5px',
+                                    'text-valign': 'center',
+                                    'text-halign': 'center',
+                                    'font-size': 12,
+                                    'font-family': 'Consolas, monospace',
+                                    'color': '#1E3F66', // Dark blue text color
+                                    'text-wrap': 'wrap',
+                                    'text-max-width': 100
+                                }
+                            },
+                            {
+                                selector: 'edge',
+                                style: {
+                                    'width': 2,
+                                    'line-color': '#A8C5E0',
+                                    'target-arrow-color': '#A8C5E0',
+                                    'target-arrow-shape': 'vee',
+                                    'curve-style': 'bezier',
+                                    'arrow-scale': 1.2
                                 }
                             }
-                        });
-
-
-
-
-                    }
-
-                    // Function to save the current state of the webview
-                    function saveState() {
-                        vscode.setState({
-                            symbolsData,
-                            sizeSortOrder,
-                            nameSortOrder,
-                            sectionSizes,  // Save full sectionSizes object
-                            flashUsed: document.getElementById('totalFlashUsed').textContent || 0,
-                            ramUsed: document.getElementById('totalRamUsed').textContent || 0
-                        });
-                    }
-
-<!--------------------------------------------------------------------------------------------------------------------------------------->    
-// Function to normalize addresses (remove '0x' prefix and convert to lowercase)
-// Function to normalize addresses (remove '0x' prefix and convert to lowercase)
-
-function normalizeAddress(address) {
-    return address.toLowerCase().replace(/^0x/, '').padStart(8, '0');
-}
-
-window.addEventListener('message', event => {
-    const message = event.data;
-    if (message.command === 'displayCallGraph') {
-        const graphData = message.graph;
-        const addressToFunctionName = graphData.addressToFunctionName;
-
-        console.log('Address to Function Name Map:', addressToFunctionName);  // Debugging
-
-        const elements = [];
-        const nodeMap = new Map();  // Map to track nodes and prevent duplicates
-
-        // Create nodes
-        console.log("Creating nodes...");
-        graphData.nodes.forEach(node => {
-            const nodeId = normalizeAddress(node.address);
-            const label = node.name || addressToFunctionName[nodeId] || node.address;
-
-            // Log node details
-            console.log(`Node: ID=${nodeId}, Label=${label}`);
-            console.log('Address to Function Name Map:', addressToFunctionName);
-
-            if (!nodeMap.has(nodeId)) {
-                elements.push({ data: { id: nodeId, label: label } });
-                nodeMap.set(nodeId, label);
-            }
-        });
-
-        // Create edges
-        Object.keys(graphData.edges).forEach(fromAddress => {
-            graphData.edges[fromAddress].forEach(toAddress => {
-                fromAddress = normalizeAddress(fromAddress);
-                toAddress = normalizeAddress(toAddress);
-
-                // Log edge details
-                console.log(`Edge: From=${fromAddress}, To=${toAddress}`);
-
-                // Use addressToFunctionName to get labels
-                if (!nodeMap.has(fromAddress)) {
-                    const label = addressToFunctionName[fromAddress] || `Function at ${fromAddress}`;
-                    elements.push({
-                        data: { id: fromAddress, label: label }
+                        ],
+                        layout: {
+                            name: 'dagre',
+                            rankDir: 'TB', // Top to Bottom
+                            nodeSep: 50,
+                            edgeSep: 10,
+                            rankSep: 100,
+                            fit: true,
+                            padding: 30
+                            // Removed 'cose' layout properties
+                        }
                     });
-                    nodeMap.set(fromAddress, label);
                 }
-
-                if (!nodeMap.has(toAddress)) {
-                    const label = addressToFunctionName[toAddress] || `Function at ${toAddress}`;
-                    elements.push({
-                        data: { id: toAddress, label: label }
-                    });
-                    nodeMap.set(toAddress, label);
-                }
-
-                elements.push({
-                    data: { source: fromAddress, target: toAddress }
-                });
             });
-        });
-
-        // console.log('Elements after processing:', elements);  // Log the final elements
-
-        // Initialize Cytoscape with the 'cose' layout
-        const cy = cytoscape({
-            container: document.getElementById('callGraphContainer'),
-            elements: elements,
-            style: [
-                {
-                    selector: 'node',
-                    style: {
-                        'background-color': '#666',
-                        'label': 'data(label)'
-                    }
-                },
-                {
-                    selector: 'edge',
-                    style: {
-                        'width': 3,
-                        'line-color': '#ccc',
-                        'target-arrow-color': '#ccc',
-                        'target-arrow-shape': 'triangle'
-                    }
-                }
-            ],
-            layout: {
-                name: 'cose',  // Use cose layout for better distribution
-                fit: true,  // Fit the graph to the viewport
-                padding: 30,  // Padding around the layout
-                nodeRepulsion: 4000,  // Forces that push nodes apart
-                idealEdgeLength: 100,  // Ideal length of edges
-                edgeElasticity: 100,  // Elasticity of edges
-                gravity: 1,  // Pull nodes towards the center
-                numIter: 1000,  // Number of iterations for the layout
-                initialTemp: 200  // Higher spreads nodes more initially
-            }
-        });
-    }
-});
 
 
 
-                }());
-            </script>
+        }());
+    </script>
 </body>
 
 </html>

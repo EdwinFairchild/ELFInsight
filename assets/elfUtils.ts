@@ -14,7 +14,7 @@ export function showOpenFileDialog(panel: vscode.WebviewPanel) {
         }
     }).then(fileUri => {
         if (fileUri && fileUri[0]) {
-          //  vscode.window.showInformationMessage(`Selected ELF file: ${fileUri[0].fsPath}`);
+            //  vscode.window.showInformationMessage(`Selected ELF file: ${fileUri[0].fsPath}`);
             loadElfSymbols(fileUri[0].fsPath, panel);
         } else {
             vscode.window.showErrorMessage('No file selected');
@@ -24,7 +24,7 @@ export function showOpenFileDialog(panel: vscode.WebviewPanel) {
 
 // Function to load symbols from the selected ELF file
 export function loadElfSymbols(elfFilePath: string, panel: vscode.WebviewPanel) {
-  //  vscode.window.showInformationMessage(`Loading symbols from ELF file: ${elfFilePath}`);
+    //  vscode.window.showInformationMessage(`Loading symbols from ELF file: ${elfFilePath}`);
     const nmCommand = os.platform() === 'win32' ? 'arm-none-eabi-nm.exe' : 'arm-none-eabi-nm';
 
     const process = spawn(nmCommand, ['-S', '-l', elfFilePath]);
@@ -40,8 +40,8 @@ export function loadElfSymbols(elfFilePath: string, panel: vscode.WebviewPanel) 
 
     process.on('close', (code: number) => {
         if (code === 0) {
-       //     vscode.window.showInformationMessage(`nm process completed successfully`);
-            const symbols = parseElfSymbols(output, panel,elfFilePath);  // Pass panel here
+            //     vscode.window.showInformationMessage(`nm process completed successfully`);
+            const symbols = parseElfSymbols(output, panel, elfFilePath);  // Pass panel here
         } else {
             vscode.window.showErrorMessage(`nm process exited with code ${code}`);
         }
@@ -62,7 +62,10 @@ async function parseElfSymbols(output: string, panel: vscode.WebviewPanel, elfFi
     const symbols = lines.map(line => {
         const parts = line.trim().split(/\s+/);
         if (parts.length >= 4) {
-            const sizeInBytes = parseInt(parts[1], 16); // Convert hex size to decimal
+            let sizeInBytes = parseInt(parts[1], 16); // Convert hex size to decimal
+            if (isNaN(sizeInBytes)) {
+                sizeInBytes = 0; // Default to 0 if parsing fails
+            }
             const typeCode = parts[2];
             let section = 'Unknown';
 
@@ -97,7 +100,7 @@ async function parseElfSymbols(output: string, panel: vscode.WebviewPanel, elfFi
             // Return the symbol information excluding the 'type' field
             return {
                 address: parts[0],
-                size: `${sizeInBytes} (bytes)`,
+                size: sizeInBytes,
                 name: parts[3],
                 fileLocation: parts.length > 4 ? parts[4] : 'N/A',
                 section: section
@@ -112,40 +115,35 @@ async function parseElfSymbols(output: string, panel: vscode.WebviewPanel, elfFi
     // Calculate total RAM usage (bss + data + bssWeak)
     const totalRamUsed = sectionSizes.bss + sectionSizes.data + sectionSizes.bssWeak;
 
-    // Show notifications to display the totals
-    vscode.window.showInformationMessage(`Total Flash used: ${totalFlashUsed} bytes`);
-    vscode.window.showInformationMessage(`Total RAM used: ${totalRamUsed} bytes`);
+    // Fetch function symbols and call graph
+    const { functions: functionSymbols, functionNameToAddress, addressToFunctionName } = await getFunctionSymbols(elfFilePath);
 
-   // Fetch function symbols and call graph
-   const { functions: functionSymbols, functionNameToAddress, addressToFunctionName } = await getFunctionSymbols(elfFilePath);
+    const { functionCalls: callGraph } = await getCallGraph(elfFilePath, functionNameToAddress, addressToFunctionName, functionSymbols);
 
-   const { functionCalls: callGraph } = await getCallGraph(elfFilePath, functionNameToAddress, addressToFunctionName, functionSymbols);
+    // Convert the Map to a plain object
+    const addressToFunctionNameObj = Object.fromEntries(addressToFunctionName);
 
-   // Convert the Map to a plain object
-   const addressToFunctionNameObj = Object.fromEntries(addressToFunctionName);
+    // Post message to webview with symbols and section sizes
+    panel.webview.postMessage({
+        command: 'displaySymbols',
+        symbols,
+        sectionSizes,
+        flashUsed: totalFlashUsed,
+        ramUsed: totalRamUsed
+    });
 
-   // Post message to webview with symbols and section sizes
-   panel.webview.postMessage({
-       command: 'displaySymbols',
-       symbols,
-       sectionSizes,
-       flashUsed: totalFlashUsed,
-       ramUsed: totalRamUsed
-   });
+    // Post message to webview with call graph and addressToFunctionName object
+    panel.webview.postMessage({
+        command: 'displayCallGraph',
+        graph: {
+            nodes: functionSymbols,  // List of function nodes
+            edges: callGraph,        // Edges between functions
+            addressToFunctionName: addressToFunctionNameObj  // Converted to object
+        }
+    });
 
-   // Post message to webview with call graph and addressToFunctionName object
-   panel.webview.postMessage({
-       command: 'displayCallGraph',
-       graph: {
-           nodes: functionSymbols,  // List of function nodes
-           edges: callGraph,        // Edges between functions
-           addressToFunctionName: addressToFunctionNameObj  // Converted to object
-       }
-   });
 
-   vscode.window.showInformationMessage(`Symbols length: ${symbols.length}`);
-
-   return symbols;
+    return symbols;
 }
 interface FunctionSymbol {
     address: string;

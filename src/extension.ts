@@ -5,7 +5,7 @@ import { showOpenFileDialog } from '../assets/elfUtils';
 
 export function activate(context: vscode.ExtensionContext) {
 
-    vscode.window.showInformationMessage('Congratulations, your extension "elfinsight" is now active!');
+    vscode.window.showInformationMessage('Aww snap, it just got real!');
 
     const disposable = vscode.commands.registerCommand('elfinsight.showWebview', () => {
         const panel = vscode.window.createWebviewPanel(
@@ -21,10 +21,10 @@ export function activate(context: vscode.ExtensionContext) {
         panel.webview.html = getWebviewContent(panel.webview, context.extensionUri);
 
         panel.webview.onDidReceiveMessage(message => {
-            vscode.window.showInformationMessage(`Received message from webview: ${JSON.stringify(message)}`);
+
             switch (message.command) {
                 case 'loadSymbols':
-                    vscode.window.showInformationMessage('Opening file dialog...');
+
                     showOpenFileDialog(panel);
                     break;
                 default:
@@ -36,4 +36,4 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(disposable);
 }
 
-export function deactivate() {}
+export function deactivate() { }
