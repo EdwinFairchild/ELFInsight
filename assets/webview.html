@@ -358,6 +358,7 @@
             let sizeSortOrder = 1;
             let nameSortOrder = 1;
             let sectionSizes = {};
+            let memoryBarChart = null;  // Declare the chart instance globally
 
             // Restore state if available
             const previousState = vscode.getState();
@@ -452,6 +453,10 @@
                 const message = event.data;
 
                 if (message.command === 'displaySymbols') {
+                    // Clear previous data before setting new symbols and section sizes
+                    symbolsData = [];
+                    sectionSizes = {};
+
                     symbolsData = message.symbols || [];
                     sectionSizes = message.sectionSizes || {};
                     updateTable(symbolsData);
@@ -551,6 +556,7 @@
                 updateTable(filteredData, query);
             }
 
+
             // Function to update the bar chart
             function updateBarChart(sectionSizes) {
                 const ctx = document.getElementById('memoryBarChart').getContext('2d');
@@ -558,6 +564,11 @@
                 if (!sectionSizes || !ctx) {
                     console.error('No data provided for the bar chart or canvas context is missing');
                     return;
+                }
+                // Destroy previous chart instance if it exists
+                // Only destroy the chart if it exists
+                if (memoryBarChart !== null) {
+                    memoryBarChart.destroy();
                 }
 
                 const chartData = {
@@ -574,7 +585,7 @@
                     }]
                 };
 
-                new Chart(ctx, {
+                memoryBarChart = new Chart(ctx, {
                     type: 'bar',
                     data: chartData,
                     options: {
@@ -623,7 +634,8 @@
                     nameSortOrder,
                     sectionSizes,  // Save full sectionSizes object
                     flashUsed: document.getElementById('totalFlashUsed').textContent || 0,
-                    ramUsed: document.getElementById('totalRamUsed').textContent || 0
+                    ramUsed: document.getElementById('totalRamUsed').textContent || 0,
+
                 });
             }
 
