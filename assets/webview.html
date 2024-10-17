@@ -4,18 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy"
+    <!-- <meta http-equiv="Content-Security-Policy"
         content="default-src 'none'; img-src vscode-resource:; script-src 'unsafe-inline' {{cspSource}}; style-src vscode-resource: 'unsafe-inline' {{cspSource}};">
-        
-        <!-- <meta http-equiv="Content-Security-Policy"
+         -->
+        <meta http-equiv="Content-Security-Policy"
         content="default-src 'none'; img-src vscode-resource:; script-src 'unsafe-inline' {{cspSource}} vscode-resource:; style-src vscode-resource: 'unsafe-inline' {{cspSource}};">
-     -->
+    
    
     <title>ELFInsight Webview</title>
     <link rel="stylesheet" href="{{bootstrapUri}}">
     <script src="{{popperJsUri}}"></script>
     <script src="{{chartJsUri}}"></script>
-    <script src="{{bootstrapJsUri}}"></script>
+    <script src="{{cytoscapeJsUri}}"></script>
+
     <style>
 
   .tab {
@@ -244,6 +245,7 @@
     <!-- Call Graphs Tab (placeholder content) -->
     <div class="tab-pane fade" id="callGraphs" role="tabpanel" aria-labelledby="callGraphs-tab">
       <p>Call graph visualization and analysis will be added here.</p>
+      <div id="callGraphContainer" style="width: 100%; height: 500px;"></div>
     </div>
   
     <!-- Detailed Reports Tab (placeholder content) -->
@@ -251,6 +253,10 @@
       <p>Detailed reports and insights will be added here.</p>
     </div>
   </div>
+  <!-------------------------------CAll graph ----------------->
+
+
+
 
             <script>
                 (function () {
@@ -529,6 +535,115 @@
                             ramUsed: document.getElementById('totalRamUsed').textContent || 0
                         });
                     }
+
+<!--------------------------------------------------------------------------------------------------------------------------------------->    
+// Function to normalize addresses (remove '0x' prefix and convert to lowercase)
+// Function to normalize addresses (remove '0x' prefix and convert to lowercase)
+
+function normalizeAddress(address) {
+    return address.toLowerCase().replace(/^0x/, '').padStart(8, '0');
+}
+
+window.addEventListener('message', event => {
+    const message = event.data;
+    if (message.command === 'displayCallGraph') {
+        const graphData = message.graph;
+        const addressToFunctionName = graphData.addressToFunctionName;
+
+        console.log('Address to Function Name Map:', addressToFunctionName);  // Debugging
+
+        const elements = [];
+        const nodeMap = new Map();  // Map to track nodes and prevent duplicates
+
+        // Create nodes
+        console.log("Creating nodes...");
+        graphData.nodes.forEach(node => {
+            const nodeId = normalizeAddress(node.address);
+            const label = node.name || addressToFunctionName[nodeId] || node.address;
+
+            // Log node details
+            console.log(`Node: ID=${nodeId}, Label=${label}`);
+            console.log('Address to Function Name Map:', addressToFunctionName);
+
+            if (!nodeMap.has(nodeId)) {
+                elements.push({ data: { id: nodeId, label: label } });
+                nodeMap.set(nodeId, label);
+            }
+        });
+
+        // Create edges
+        Object.keys(graphData.edges).forEach(fromAddress => {
+            graphData.edges[fromAddress].forEach(toAddress => {
+                fromAddress = normalizeAddress(fromAddress);
+                toAddress = normalizeAddress(toAddress);
+
+                // Log edge details
+                console.log(`Edge: From=${fromAddress}, To=${toAddress}`);
+
+                // Use addressToFunctionName to get labels
+                if (!nodeMap.has(fromAddress)) {
+                    const label = addressToFunctionName[fromAddress] || `Function at ${fromAddress}`;
+                    elements.push({
+                        data: { id: fromAddress, label: label }
+                    });
+                    nodeMap.set(fromAddress, label);
+                }
+
+                if (!nodeMap.has(toAddress)) {
+                    const label = addressToFunctionName[toAddress] || `Function at ${toAddress}`;
+                    elements.push({
+                        data: { id: toAddress, label: label }
+                    });
+                    nodeMap.set(toAddress, label);
+                }
+
+                elements.push({
+                    data: { source: fromAddress, target: toAddress }
+                });
+            });
+        });
+
+        // console.log('Elements after processing:', elements);  // Log the final elements
+
+        // Initialize Cytoscape with the 'cose' layout
+        const cy = cytoscape({
+            container: document.getElementById('callGraphContainer'),
+            elements: elements,
+            style: [
+                {
+                    selector: 'node',
+                    style: {
+                        'background-color': '#666',
+                        'label': 'data(label)'
+                    }
+                },
+                {
+                    selector: 'edge',
+                    style: {
+                        'width': 3,
+                        'line-color': '#ccc',
+                        'target-arrow-color': '#ccc',
+                        'target-arrow-shape': 'triangle'
+                    }
+                }
+            ],
+            layout: {
+                name: 'cose',  // Use cose layout for better distribution
+                fit: true,  // Fit the graph to the viewport
+                padding: 30,  // Padding around the layout
+                nodeRepulsion: 4000,  // Forces that push nodes apart
+                idealEdgeLength: 100,  // Ideal length of edges
+                edgeElasticity: 100,  // Elasticity of edges
+                gravity: 1,  // Pull nodes towards the center
+                numIter: 1000,  // Number of iterations for the layout
+                initialTemp: 200  // Higher spreads nodes more initially
+            }
+        });
+    }
+});
+
+
+
                 }());
             </script>
 </body>
