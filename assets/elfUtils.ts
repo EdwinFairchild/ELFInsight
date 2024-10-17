@@ -3,6 +3,10 @@ import * as os from 'os';
 import { spawn } from 'child_process';
 import { exec } from 'child_process';
 
+const isWindows = os.platform() === 'win32';
+const nmCommand = isWindows ? 'arm-none-eabi-nm.exe' : 'arm-none-eabi-nm';
+const objdumpCommand = isWindows ? 'arm-none-eabi-objdump.exe' : 'arm-none-eabi-objdump';
+
 // Function to show open file dialog to select ELF file
 export function showOpenFileDialog(panel: vscode.WebviewPanel) {
     vscode.window.showOpenDialog({
@@ -25,7 +29,6 @@ export function showOpenFileDialog(panel: vscode.WebviewPanel) {
 // Function to load symbols from the selected ELF file
 export function loadElfSymbols(elfFilePath: string, panel: vscode.WebviewPanel) {
     //  vscode.window.showInformationMessage(`Loading symbols from ELF file: ${elfFilePath}`);
-    const nmCommand = os.platform() === 'win32' ? 'arm-none-eabi-nm.exe' : 'arm-none-eabi-nm';
 
     const process = spawn(nmCommand, ['-S', '-l', elfFilePath]);
 
@@ -158,7 +161,7 @@ function getFunctionSymbols(elfFilePath: string): Promise<{
     addressToFunctionName: Map<string, string>
 }> {
     return new Promise((resolve, reject) => {
-        exec(`arm-none-eabi-nm -C --defined-only ${elfFilePath}`, (err, stdout) => {
+        exec(`${nmCommand} -C --defined-only ${elfFilePath}`, (err, stdout) => {
             if (err) {
                 return reject(err);
             }
@@ -202,7 +205,7 @@ function getCallGraph(
     functions: FunctionSymbol[]
 ): Promise<{ functionCalls: { [key: string]: string[] } }> {
     return new Promise((resolve, reject) => {
-        exec(`arm-none-eabi-objdump -d ${elfFilePath}`, (err, stdout) => {
+        exec(`${objdumpCommand} -d ${elfFilePath}`, (err, stdout) => {
             if (err) {
                 return reject(err);
             }
